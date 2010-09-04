@@ -1,7 +1,7 @@
 <?php
 
 /**
-* 
+* Class to pass options to the admin theme configuration
 */
 class sfThemeCommandManager extends sfCommandManager
 {

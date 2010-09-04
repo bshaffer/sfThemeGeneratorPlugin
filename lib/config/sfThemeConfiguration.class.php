@@ -27,17 +27,48 @@ abstract class sfThemeConfiguration
   
   public function execute()
   {
+    $this->addThemeRoutes();
+    
+    // Copy over files specified in theme configuration
+    $this->doCopy();
+    
+    // replate php and yml constants
+    $moduleDir = sfConfig::get('sf_app_module_dir').'/'.$this->options['module'];
+    $finder = sfFinder::type('file')->name('*.php', '*.yml');
+    $this->getFilesystem()->replaceTokens($finder->in($moduleDir), '##', '##', $this->getConstants());
+  }
+  
+  public function filesToCopy()
+  {
+    return array(
+      'skeleton' => 'MODULE_DIR'
+    );
+  }
+  
+  public function addThemeRoutes()
+  {
+    // Write new route to application's routing.yml
     $routing = sfConfig::get('sf_app_config_dir').'/routing.yml';
     $content = file_get_contents($routing);
     $routesArray = sfYaml::load($content);
-
-    if (isset($routesArray[$this->options['module']]))
+    $routeContent = '';
+    
+    foreach ($this->routesToPrepend() as $name => $route) 
     {
-      $this->task->logBlock(sprintf('Unable to add routes: route "%s" already exists', $this->options['module']), 'COMMENT');
+      if (isset($routesArray[$name]))
+      {
+        $this->task->logBlock(sprintf('Unable to add routes: route "%s" already exists', $this->options['module']), 'COMMENT');
+      }
+      else
+      {
+        $routeContent = sprintf("%s:\n  %s\n\n%s", $name, $route, $routeContent);
+      }
     }
-    else
+    
+    // Add at top of routing.yml file
+    if ($routeContent) 
     {
-      $content = $this->routesToPrepend().$content;
+      $content = $routeContent.$content;
 
       $this->task->logSection('file+', $routing);
 
@@ -46,19 +77,17 @@ abstract class sfThemeConfiguration
         throw new sfCommandException(sprintf('Unable to write to file, %s.', $routing));
       }
     }
-    
-    $moduleDir = sfConfig::get('sf_app_module_dir').'/'.$this->options['module'];
-
-    // create basic application structure
+  }
+  
+  public function doCopy()
+  {
+    // Copy over files in theme
     $finder = sfFinder::type('any')->discard('.sf');
     
     if(!$dir = $this->task->getThemeDir($this->theme, 'sfDoctrineModule'))
     {
       throw new LogicException("Theme '$this->theme' not found");
     }
-
-    // Copy over files specified in theme configuration
-    // TODO: Move this into theme configuration
 
     foreach ($this->filesToCopy() as $from => $to) 
     {
@@ -80,17 +109,6 @@ abstract class sfThemeConfiguration
         $this->task->logBlock(sprintf('Unable to add file: "%s" already exists', $toFile), 'COMMENT');
       }
     }
-
-    // replate php and yml constants
-    $finder = sfFinder::type('file')->name('*.php', '*.yml');
-    $this->getFilesystem()->replaceTokens($finder->in($moduleDir), '##', '##', $this->getConstants());
-  }
-  
-  public function filesToCopy()
-  {
-    return array(
-      'skeleton' => 'MODULE_DIR'
-    );
   }
   
   public function routesToPrepend()

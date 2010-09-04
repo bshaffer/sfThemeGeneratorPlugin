@@ -38,8 +38,7 @@ EOF
   public function routesToPrepend()
   {
     $primaryKey = Doctrine_Core::getTable($this->options['model'])->getIdentifier();
-    $routes = sprintf(<<<EOF
-%s:
+    $routes = array($this->options['module'] => sprintf(<<<EOF
   class: sfDoctrineRouteCollection
   options:
     model:                %s
@@ -47,8 +46,6 @@ EOF
     prefix_path:          /%s
     column:               %s
     with_wildcard_routes: true
-
-
 EOF
       ,
       $this->options['module'], 
@@ -56,7 +53,7 @@ EOF
       $this->options['module'], 
       $this->options['module'],
       $primaryKey
-    );
+    ));
 
     return $routes;
   }
