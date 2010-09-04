@@ -15,7 +15,7 @@
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @version    SVN: $Id: sfDoctrineGenerateAdminTask.class.php 28809 2010-03-26 17:19:58Z Jonathan.Wage $
  */
-class sfGenerateModuleExtraTask extends sfDoctrineGenerateModuleTask
+class sfGenerateThemeTask extends sfDoctrineGenerateModuleTask
 {
   /**
    * @see sfTask
@@ -23,51 +23,24 @@ class sfGenerateModuleExtraTask extends sfDoctrineGenerateModuleTask
   protected function configure()
   {
     $this->addArguments(array(
-      new sfCommandArgument('application', sfCommandArgument::REQUIRED, 'The application name'),
-      new sfCommandArgument('route_or_model', sfCommandArgument::REQUIRED, 'The route name or the model class'),
+      new sfCommandArgument('theme', sfCommandArgument::REQUIRED, 'The theme name'),
     ));
 
     $this->addOptions(array(
-      new sfCommandOption('module', null, sfCommandOption::PARAMETER_REQUIRED, 'The module name', null),
-      new sfCommandOption('theme', null, sfCommandOption::PARAMETER_REQUIRED, 'The theme name', 'admin'),
-      new sfCommandOption('singular', null, sfCommandOption::PARAMETER_REQUIRED, 'The singular name', null),
-      new sfCommandOption('plural', null, sfCommandOption::PARAMETER_REQUIRED, 'The plural name', null),
       new sfCommandOption('env', null, sfCommandOption::PARAMETER_REQUIRED, 'The environment', 'dev'),
-      new sfCommandOption('actions-base-class', null, sfCommandOption::PARAMETER_REQUIRED, 'The base class for the actions', 'sfActions'),
-      new sfCommandOption('route-class', null, sfCommandOption::PARAMETER_REQUIRED, 'The routing collection class written to routing.yml', 'sfDoctrineRouteCollection'),
-      new sfCommandOption('module-generator-class', null, sfCommandOption::PARAMETER_REQUIRED, 'The module generator class name', 'sfDoctrineModule'),
     ));
 
     $this->namespace = 'generate';
-    $this->name      = 'module-extra';
-    $this->aliases   = array('generate-module');
-    $this->briefDescription = 'Generates an admin module';
+    $this->name      = 'theme';
+    $this->aliases   = array('generate-theme');
+    $this->briefDescription = 'Generates functionality in your project based on a theme';
 
     $this->detailedDescription = <<<EOF
-The [doctrine:generate-admin|INFO] task generates a Doctrine admin module:
+The [generate:theme|INFO] task generates functionality according to a theme:
 
-  [./symfony doctrine:generate-admin frontend Article|INFO]
+  [./symfony generate:theme default|INFO]
 
-The task creates a module in the [%frontend%|COMMENT] application for the
-[%Article%|COMMENT] model.
-
-The task creates a route for you in the application [routing.yml|COMMENT].
-
-You can also generate a Doctrine admin module by passing a route name:
-
-  [./symfony doctrine:generate-admin frontend article|INFO]
-
-The task creates a module in the [%frontend%|COMMENT] application for the
-[%article%|COMMENT] route definition found in [routing.yml|COMMENT].
-
-For the filters and batch actions to work properly, you need to add
-the [with_wildcard_routes|COMMENT] option to the route:
-
-  article:
-    class: sfDoctrineRouteCollection
-    options:
-      model:                Article
-      with_wildcard_routes: true
+The theme will then prompt the user for the arguments it requires to create itself.
 EOF;
   }
 
