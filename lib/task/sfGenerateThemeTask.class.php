@@ -49,160 +49,45 @@ EOF;
    */
   protected function execute($arguments = array(), $options = array())
   {
-    // get configuration for the given route
-    if (false !== ($route = $this->getRouteFromName($arguments['route_or_model'])))
-    {
-      $arguments['route'] = $route;
-      $arguments['route_name'] = $arguments['route_or_model'];
-      
-      return $this->executeInit($arguments, $options);
-    }
-
-    // is it a model class name
-    if (!class_exists($arguments['route_or_model']))
-    {
-      throw new sfCommandException(sprintf('The route "%s" does not exist and there is no "%s" class.', $arguments['route_or_model'], $arguments['route_or_model']));
-    }
-
-    $r = new ReflectionClass($arguments['route_or_model']);
-    if (!$r->isSubclassOf('Doctrine_Record'))
-    {
-      throw new sfCommandException(sprintf('"%s" is not a Doctrine class.', $arguments['route_or_model']));
-    }
-
-    // create a route
-    $options['model'] = $arguments['route_or_model'];
-    $options['name'] = strtolower(preg_replace(array('/([A-Z]+)([A-Z][a-z])/', '/([a-z\d])([A-Z])/'), '\\1_\\2', $options['model']));
-
-    if (isset($options['module']))
-    {
-      $options['route'] = $this->getRouteFromName($options['name']);
-      if ($options['route'] && !$this->checkRoute($options['route'], $options['model'], $options['module']))
-      {
-        $options['name'] .= '_'.$options['module'];
-      }
-    }
-    else
-    {
-      $options['module'] = $options['name'];
-    }
-
     // Get Theme Configuration
-    if (!class_exists($configClass = sprintf('sf%sThemeConfiguration', $options['theme']))) 
+    if (!class_exists($configClass = sprintf('sf%sThemeConfiguration', sfInflector::camelize($arguments['theme'])))) 
     {
       $configClass = 'sfDefaultThemeConfiguration';
     }
     
-    $this->themeConfiguration = new $configClass(array_merge($arguments, $options));
-    
     $databaseManager = new sfDatabaseManager($this->configuration);
 
-    $routing = sfConfig::get('sf_app_config_dir').'/routing.yml';
-    $content = file_get_contents($routing);
-    $routesArray = sfYaml::load($content);
+    $this->themeConfiguration = new $configClass($this, $this->commandManager->getOptionValues());
 
-    if (!isset($routesArray[$options['name']]))
-    {
-      $content = $this->themeConfiguration->routesToPrepend().$content;
+    $this->themeConfiguration->setup();
 
-      $this->logSection('file+', $routing);
-
-      if (false === file_put_contents($routing, $content))
-      {
-        throw new sfCommandException(sprintf('Unable to write to file, %s.', $routing));
-      }
-    }
-
-    $arguments['route'] = $this->getRouteFromName($options['name']);
-    $arguments['route_name'] = $options['name'];
-
-    return $this->executeInit($arguments, $options);
+    $this->themeConfiguration->execute();
+    
+    $this->logSection('generate', 'Task complete.');
   }
   
-  protected function executeInit($arguments = array(), $options = array())
+  public function ask($question, $style = 'QUESTION', $default = null)
   {
-    if (!$arguments['route'] instanceof sfDoctrineRouteCollection)
+    if ($default !== null) 
     {
-      throw new sfCommandException(sprintf('The route "%s" is not a Doctrine collection route.', $arguments['route_name']));
-    }
-
-    $routeOptions = $arguments['route']->getOptions();
-
-    if (!isset($arguments['module'])) 
-    {
-      $arguments['module'] = $routeOptions['module'];
-    }
-    
-    if (!isset($arguments['model'])) 
-    {
-      $arguments['model'] = $routeOptions['model'];
-    }
-    
-    $moduleDir = sfConfig::get('sf_app_module_dir').'/'.$arguments['module'];
-
-    // create basic application structure
-    $finder = sfFinder::type('any')->discard('.sf');
-    if($dir = $this->getThemeDir($options['theme'], $options['module-generator-class']))
-    {
-      // Copy over files specified in theme configuration
-      // TODO: Move this into theme configuration
-      $files = $this->themeConfiguration->filesToCopy();
-      foreach ($files as $from => $to) 
+      switch (true) 
       {
-        $fromFile = sprintf('%s/%s', $dir, $from);
-        $toFile = strtr($to, array(
-          '%module_dir%'      => sfConfig::get('sf_app_module_dir'),
-          '%app_dir%'         => sfConfig::get('sf_app_dir'),
-          '%app_config_dir%'  => sfConfig::get('sf_app_config_dir'),
-          '%module%'          => $arguments['module'],
-          '%model%'           => $arguments['model'],
-        ));
-      
-        if (is_numeric($from)) 
-        {
-          // create directory or file
-          $this->getFilesystem()->mkdirs($toFile);
-        }
-        elseif (is_dir($toFile)) 
-        {
-          $this->getFilesystem()->mirror($fromFile, $toFile, $finder);
-        }
-        elseif (!file_exists($toFile))
-        {
-          $this->getFilesystem()->rename($fromFile, $toFile);
-        }
+        case $default === true:
+          $text = 'true';
+          break;
+
+        case $default === false:
+          $text = 'false';
+          break;
+        
+        default:
+          $text = $default;
       }
-    }
-    else
-    {
-      throw new LogicException("Theme '$options[theme]' not found");
+      $question = sprintf('%s [%s]:', $question, $text);
     }
 
-    // create basic test
-    $this->getFilesystem()->copy(sfConfig::get('sf_symfony_lib_dir').DIRECTORY_SEPARATOR.'task'.DIRECTORY_SEPARATOR.'generator'.DIRECTORY_SEPARATOR.'skeleton'.DIRECTORY_SEPARATOR.'module'.DIRECTORY_SEPARATOR.'test'.DIRECTORY_SEPARATOR.'actionsTest.php', sfConfig::get('sf_test_dir').DIRECTORY_SEPARATOR.'functional'.DIRECTORY_SEPARATOR.$arguments['application'].DIRECTORY_SEPARATOR.$arguments['module'].'ActionsTest.php');
-
-    // customize test file
-    $this->getFilesystem()->replaceTokens(sfConfig::get('sf_test_dir').DIRECTORY_SEPARATOR.'functional'.DIRECTORY_SEPARATOR.$arguments['application'].DIRECTORY_SEPARATOR.$arguments['module'].'ActionsTest.php', '##', '##', $this->constants);
-
-    // customize php and yml files
-    $finder = sfFinder::type('file')->name('*.php', '*.yml');
-    $this->constants['CONFIG'] = sprintf(<<<EOF
-    model_class:           %s
-    theme:                 %s
-    singular:              %s
-    plural:                %s
-    actions_base_class:    %s
-EOF
-    ,
-      $arguments['model'],
-      $options['theme'],
-      $options['singular'] ? $options['singular'] : '~',
-      $options['plural'] ? $options['plural'] : '~',
-      $options['actions-base-class']
-    );
-    $this->getFilesystem()->replaceTokens($finder->in($moduleDir), '##', '##', $this->constants);
+    return parent::ask($question, $style, $default);
   }
-  
   
   public function getThemeDir($theme, $class)
   {
@@ -217,6 +102,18 @@ EOF
       {
         return $dir;
       }
+    }
+  }
+
+  protected function process(sfCommandManager $commandManager, $options)
+  {
+    $this->commandManager = new sfThemeCommandManager($commandManager);
+    $this->commandManager->process($options);
+    $commandManager->process($options);
+    
+    if (!$this->commandManager->isValid())
+    {
+      throw new sfCommandArgumentsException(sprintf("The execution of task \"%s\" failed.\n- %s", $this->getFullName(), implode("\n- ", $this->commandManager->getErrors())));
     }
   }
 
@@ -255,5 +152,12 @@ EOF
     }
 
     return false;
+  }
+  
+  public function bootstrapSymfony($app, $env, $debug = true)
+  {
+    $configuration = ProjectConfiguration::getApplicationConfiguration($app, $env, $debug);
+
+    $this->context = sfContext::createInstance($configuration);
   }
 }

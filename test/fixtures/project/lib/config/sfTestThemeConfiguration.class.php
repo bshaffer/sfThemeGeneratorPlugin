@@ -1,6 +1,6 @@
 <?php
 
-class sfDefaultThemeConfiguration extends sfModuleThemeConfiguration
+class sfTestThemeConfiguration extends sfThemeConfiguration
 {
   public function filesToCopy()
   {

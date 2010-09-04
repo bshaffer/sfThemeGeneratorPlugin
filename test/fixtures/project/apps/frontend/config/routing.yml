@@ -1,9 +1,0 @@
-company:
-  class: sfDoctrineRouteCollection
-  options:
-    model:                Company
-    module:               company
-    prefix_path:          /company
-    column:               id
-    with_wildcard_routes: true
-
