@@ -15,23 +15,22 @@ class sfModuleGeneratorLimeTest extends lime_test
   /**
    * Executes a task and tests its success.
    * 
-   * @param   string  $taskClass
    * @param   array   $arguments
    * @param   array   $options
    * @param   boolean $boolean
    * 
    * @return  boolean
    */
-  public function task_ok($taskClass, array $arguments = array(), array $options = array(), $boolean = true, $message = null)
+  public function task_ok(array $arguments = array(), array $options = array(), $boolean = true, $message = null)
   {
     if (null === $message)
     {
-      $message = sprintf('"%s" execution %s', $taskClass, $boolean ? 'succeeded' : 'failed');
+      $message = sprintf('"sfGenerateModuleExtraTask" execution %s', $boolean ? 'succeeded' : 'failed');
     }
 
     chdir(dirname(__FILE__).'/../../test/fixtures/project');
 
-    $task = new $taskClass($this->configuration->getEventDispatcher(), new sfFormatter());
+    $task = new sfGenerateModuleExtraTask($this->configuration->getEventDispatcher(), new sfFormatter());
     $task->setConfiguration($this->configuration);
     try
     {

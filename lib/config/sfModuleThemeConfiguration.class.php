@@ -13,7 +13,7 @@ abstract class sfModuleThemeConfiguration
   public function filesToCopy()
   {
     return array(
-      'skeleton' => '%module_dir%'
+      'skeleton' => '%module_dir%/%module%'
     );
   }
   

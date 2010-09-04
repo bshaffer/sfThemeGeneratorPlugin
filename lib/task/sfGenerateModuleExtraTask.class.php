@@ -81,8 +81,8 @@ EOF;
     {
       $arguments['route'] = $route;
       $arguments['route_name'] = $arguments['route_or_model'];
-
-      return $this->generateForRoute($arguments, $options);
+      
+      return $this->executeInit($arguments, $options);
     }
 
     // is it a model class name
@@ -109,16 +109,18 @@ EOF;
         $options['name'] .= '_'.$options['module'];
       }
     }
-
-    // Get Theme Configuration
-    if ($options['theme'] && class_exists($configClass = sprintf('sf%sThemeConfiguration', $options['theme']))) 
-    {
-      $this->themeConfiguration = new $configClass(array_merge($arguments, $options));
-    }
     else
     {
-      $this->themeConfiguration = new sfModuleThemeConfiguration(array_merge($arguments, $options));
+      $options['module'] = $options['name'];
     }
+
+    // Get Theme Configuration
+    if (!class_exists($configClass = sprintf('sf%sThemeConfiguration', $options['theme']))) 
+    {
+      $configClass = 'sfDefaultThemeConfiguration';
+    }
+    
+    $this->themeConfiguration = new $configClass(array_merge($arguments, $options));
     
     $databaseManager = new sfDatabaseManager($this->configuration);
 
@@ -141,11 +143,28 @@ EOF;
     $arguments['route'] = $this->getRouteFromName($options['name']);
     $arguments['route_name'] = $options['name'];
 
-    return $this->generateForRoute($arguments, $options);
+    return $this->executeInit($arguments, $options);
   }
   
   protected function executeInit($arguments = array(), $options = array())
   {
+    if (!$arguments['route'] instanceof sfDoctrineRouteCollection)
+    {
+      throw new sfCommandException(sprintf('The route "%s" is not a Doctrine collection route.', $arguments['route_name']));
+    }
+
+    $routeOptions = $arguments['route']->getOptions();
+
+    if (!isset($arguments['module'])) 
+    {
+      $arguments['module'] = $routeOptions['module'];
+    }
+    
+    if (!isset($arguments['model'])) 
+    {
+      $arguments['model'] = $routeOptions['model'];
+    }
+    
     $moduleDir = sfConfig::get('sf_app_module_dir').'/'.$arguments['module'];
 
     // create basic application structure
@@ -155,18 +174,23 @@ EOF;
       // Copy over files specified in theme configuration
       // TODO: Move this into theme configuration
       $files = $this->themeConfiguration->filesToCopy();
-      foreach ($files as $fromFile => $toFile) 
+      foreach ($files as $from => $to) 
       {
-        $fromFile = $dir.$fromFile;
-        $toFile = strtr($toFile, array(
-          '%module_dir%'      => $moduleDir,
+        $fromFile = sprintf('%s/%s', $dir, $from);
+        $toFile = strtr($to, array(
+          '%module_dir%'      => sfConfig::get('sf_app_module_dir'),
           '%app_dir%'         => sfConfig::get('sf_app_dir'),
           '%app_config_dir%'  => sfConfig::get('sf_app_config_dir'),
           '%module%'          => $arguments['module'],
           '%model%'           => $arguments['model'],
         ));
-        
-        if (is_dir($toFile)) 
+      
+        if (is_numeric($from)) 
+        {
+          // create directory or file
+          $this->getFilesystem()->mkdirs($toFile);
+        }
+        elseif (is_dir($toFile)) 
         {
           $this->getFilesystem()->mirror($fromFile, $toFile, $finder);
         }
@@ -192,23 +216,15 @@ EOF;
     $this->constants['CONFIG'] = sprintf(<<<EOF
     model_class:           %s
     theme:                 %s
-    non_verbose_templates: %s
-    with_show:             %s
     singular:              %s
     plural:                %s
-    route_prefix:          %s
-    with_doctrine_route:   %s
     actions_base_class:    %s
 EOF
     ,
       $arguments['model'],
       $options['theme'],
-      $options['non-verbose-templates'] ? 'true' : 'false',
-      $options['with-show'] ? 'true' : 'false',
       $options['singular'] ? $options['singular'] : '~',
       $options['plural'] ? $options['plural'] : '~',
-      $options['route-prefix'] ? $options['route-prefix'] : '~',
-      $options['with-doctrine-route'] ? 'true' : 'false',
       $options['actions-base-class']
     );
     $this->getFilesystem()->replaceTokens($finder->in($moduleDir), '##', '##', $this->constants);
@@ -218,8 +234,8 @@ EOF
   public function getThemeDir($theme, $class)
   {
     $dirs = array_merge(
-      array(sfConfig::get('sf_data_dir').'/generator/'.$class.'/'.$theme.'/skeleton'), // project
-      $this->getPluginSubPaths('/data/generator/'.$class.'/'.$theme.'/skeleton')      // plugins
+      array(sfConfig::get('sf_data_dir').'/generator/'.$class.'/'.$theme),            // project
+      $this->configuration->getPluginSubPaths('/data/generator/'.$class.'/'.$theme)   // plugins
     );
     
     foreach ($dirs as $dir)
@@ -229,5 +245,42 @@ EOF
         return $dir;
       }
     }
+  }
+
+  // ==============================================
+  // = From sfDoctrineGenerateAdminTask.class.php =
+  // ==============================================
+
+  protected function getRouteFromName($name)
+  {
+    $config = new sfRoutingConfigHandler();
+    $routes = $config->evaluate($this->configuration->getConfigPaths('config/routing.yml'));
+
+    if (isset($routes[$name]))
+    {
+      return $routes[$name];
+    }
+
+    return false;
+  }
+
+  /**
+   * Checks whether a route references a model and module.
+   *
+   * @param mixed  $route  A route collection
+   * @param string $model  A model name
+   * @param string $module A module name
+   *
+   * @return boolean
+   */
+  protected function checkRoute($route, $model, $module)
+  {
+    if ($route instanceof sfDoctrineRouteCollection)
+    {
+      $options = $route->getOptions();
+      return $model == $options['model'] && $module == $options['module'];
+    }
+
+    return false;
   }
 }
