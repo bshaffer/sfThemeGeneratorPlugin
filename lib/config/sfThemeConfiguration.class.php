@@ -61,7 +61,7 @@ abstract class sfThemeConfiguration
       }
       else
       {
-        $routeContent = sprintf("%s:\n  %s\n\n%s", $name, $route, $routeContent);
+        $routeContent = sprintf("%s:\n%s\n\n%s", $name, $route, $routeContent);
       }
     }
     

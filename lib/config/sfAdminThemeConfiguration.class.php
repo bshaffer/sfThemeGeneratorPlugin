@@ -22,16 +22,20 @@ class sfAdminThemeConfiguration extends sfThemeConfiguration
     parent::initConstants();
 
     $this->constants['CONFIG'] = sprintf(<<<EOF
-      model_class:           %s
-      theme:                 %s
-      route_prefix:          %s
-      actions_base_class:    %s
+    model_class:           %s
+    theme:                 %s
+    non_verbose_templates: true
+    with_show:             false
+    singular:              ~
+    plural:                ~
+    route_prefix:          %s
+    with_doctrine_route:   true
+    actions_base_class:    sfActions
 EOF
       ,
       $this->options['model'],
       $this->theme,
-      $this->options['module'],
-      'sfActions'
+      $this->options['module']
     );
   }
   
@@ -48,7 +52,6 @@ EOF
     with_wildcard_routes: true
 EOF
       ,
-      $this->options['module'], 
       $this->options['model'], 
       $this->options['module'], 
       $this->options['module'],
