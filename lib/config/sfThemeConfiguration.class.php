@@ -113,7 +113,7 @@ abstract class sfThemeConfiguration
   
   public function routesToPrepend()
   {
-    return '';
+    return array();
   }
   
   public function getConstants()

@@ -156,8 +156,12 @@ EOF;
   
   public function bootstrapSymfony($app, $env, $debug = true)
   {
-    $configuration = ProjectConfiguration::getApplicationConfiguration($app, $env, $debug);
-
-    $this->context = sfContext::createInstance($configuration);
+    $this->configuration = ProjectConfiguration::getApplicationConfiguration($app, $env, $debug);
+    
+    // Prevents from accidental re-bootstrapping!
+    if (!sfContext::hasInstance()) 
+    {
+      $this->context = sfContext::createInstance($this->configuration);
+    }
   }
 }

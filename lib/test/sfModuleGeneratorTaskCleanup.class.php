@@ -2,11 +2,14 @@
 
 class sfGenerateThemeTaskCleanup
 {
-  protected $modules;
+  protected 
+    $modules   = null,
+    $templates = null;
 
   public function __construct()
   {
-    $this->modules = $this->getModules();
+    $this->modules    = $this->getModules();
+    $this->templates  = $this->getTemplates();
   }
 
   public function __destruct()
@@ -22,14 +25,26 @@ class sfGenerateThemeTaskCleanup
       sfToolkit::clearDirectory($dir);
       rmdir($dir);
     }
-
+    
+    // Clear any added templates since the construction of this class
+    foreach (array_diff($this->getTemplates(), $this->templates) as $file)
+    {
+      unlink($file);
+    }
+    
     // Clear routing.yml file  
-    file_put_contents(dirname(__FILE__).'/../../test/fixtures/project/apps/frontend/config/routing.yml', '');
+    file_put_contents(sfConfig::get('sf_app_config_dir').'/routing.yml', '');
   }
 
   protected function getModules()
   {
     return sfFinder::type('dir')->maxdepth(0)
-      ->in(dirname(__FILE__).'/../../test/fixtures/project/apps/frontend/modules');
+      ->in(sfConfig::get('sf_app_module_dir'));
+  }
+  
+  protected function getTemplates()
+  {
+    return sfFinder::type('file')->maxdepth(0)
+      ->in(sfConfig::get('sf_app_template_dir'));
   }
 }
