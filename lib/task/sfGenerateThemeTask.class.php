@@ -28,6 +28,7 @@ class sfGenerateThemeTask extends sfDoctrineGenerateModuleTask
 
     $this->addOptions(array(
       new sfCommandOption('env', null, sfCommandOption::PARAMETER_REQUIRED, 'The environment', 'dev'),
+      new sfCommandOption('accept-defaults', null, sfCommandOption::PARAMETER_NONE, 'Accept all default theme options'),
     ));
 
     $this->namespace = 'generate';

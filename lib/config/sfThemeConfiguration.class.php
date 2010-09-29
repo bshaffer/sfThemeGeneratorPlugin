@@ -12,6 +12,13 @@ abstract class sfThemeConfiguration
   {
     $this->task = $task;
     $this->options = $options;
+    
+    if (!$this->theme) 
+    {
+      throw new sfException(
+        sprintf('No theme for class %s: You must set the protected $theme property in your sfThemeConfiguration subclass.', get_class($this))
+      );
+    }
   }
   
   public function setup()
