@@ -5,6 +5,9 @@
 */
 abstract class sfThemeGeneratorConfiguration extends sfModelGeneratorConfiguration
 {
+  protected 
+    $availableConfigs = array();
+
   public function mergeFieldConfiguration($fields)
   {
     $defaults = $this->getFieldsDefault();
@@ -28,5 +31,34 @@ abstract class sfThemeGeneratorConfiguration extends sfModelGeneratorConfigurati
   public function getFilterFields()
   {
     return $this->mergeFieldConfiguration($this->getFieldsFilter());
+  }
+  
+  public function getConfiguration()
+  {
+    return $this->configuration;
+  }
+  
+  public function validateConfig($config)
+  {
+    $this->checkConfigIsValid($config, $this->availableConfigs);
+  }
+  
+  public function checkConfigIsValid($configs, $available)
+  {
+    if ($available !== array()) // all options pass for "array()"
+    {
+      foreach ($configs as $key => $config) 
+      {
+        if (!isset($available[$key])) 
+        {
+          throw new InvalidArgumentException(sprintf('Configuration key "%s" is invalid.', $key));
+        }
+      
+        if (is_array($config) && is_array($available[$key])) 
+        {
+          $this->checkConfigIsValid($config, $available[$key]);
+        }
+      }
+    }
   }
 }
