@@ -44,7 +44,7 @@ class sfThemeGenerator extends sfDoctrineGenerator
 
       $content = sprintf("
 [?php if (\$sf_user->hasCredential(%s)): ?]
-%s
+  %s
 [?php endif; ?]
 ", $credentials, $content);
     }
@@ -73,6 +73,7 @@ class sfThemeGenerator extends sfDoctrineGenerator
   
   protected function loadConfiguration()
   {
+    $this->configToOptions($this->params);
     $this->configToOptions($this->config);
 
     // This needs to be refactored to not be so shitty
@@ -121,6 +122,8 @@ class sfThemeGenerator extends sfDoctrineGenerator
   {
     $action = strpos($action, '_') === 0 ? substr($action, 1) : $action;
     
+    $params = array_merge(array('attributes' => array('class' => $action)), $params);
+        
     $method = sprintf('linkTo%s', ucwords(sfInflector::camelize($action)));
     
     $link = method_exists($this, $method) ? $this->$method($params) : $this->getLinkToAction($action, $params, true);
@@ -128,12 +131,31 @@ class sfThemeGenerator extends sfDoctrineGenerator
     return $this->addCredentialCondition($link, $params);
   }
   
-  public function urlFor($action)
+
+  /**
+   * Returns HTML code for an action link.
+   *
+   * @param string  $actionName The action name
+   * @param array   $params     The parameters
+   * @param boolean $pk_link    Whether to add a primary key link or not
+   *
+   * @return string HTML code
+   */
+  public function getLinkToAction($actionName, $params, $pk_link = false)
+  {
+    $action = isset($params['action']) ? $params['action'] : 'List'.sfInflector::camelize($actionName);
+
+    $url_params = $pk_link ? '?'.$this->getPrimaryKeyUrlParams() : '\'';
+
+    return '[?php echo link_to(\''.$params['label'].'\', \''.$this->getModuleName().'/'.$action.$url_params.', '.$this->asPhp($params['params']).') ?]';
+  }
+  
+  public function urlFor($action, $routeName = true)
   {
     if (isset($this->params['route_prefix']))
     {
       $route = 'list' == $action ? $this->params['route_prefix'] : $this->params['route_prefix'].'_'.$action;
-      return $this->asPhp('@'.$route);
+      return $this->asPhp(($routeName ? '@' : '').$route);
     }
 
     return $this->asPhp($this->getModuleName().'/'.$action);
