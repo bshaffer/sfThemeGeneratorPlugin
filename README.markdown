@@ -53,10 +53,17 @@ class.  This controls how your theme is set up.
 Is there anything else really cool I should know about?
 -------------------------------------------------------
 
-In fact, there is exactly _one_ other cool thing you should know about.  This plugin comes with the _theme:copy-cache_ task, which takes all your
+In fact, there is exactly _one_ other cool thing you should know about.  This plugin comes with the `theme:copy-cache` task, which takes all your
 generated code and sticks it *right in your module*!  Why is this fantastic?  If you hark back to the *main purpose of this plugin*, you may recall
 that purpose is to **provide an easy way to generate useful cached code**.  Because this code is useful, we often will want to pull it from cache
 and customize it from there.  It's great code, after all!  Use this task to copy over your files.  You will be prompted to overwrite existing files,
 so don't worry about that.
 
+    # Wow!  How Cool!
+    $ php symfony theme:copy-cache frontend my_model
 
+What *haven't* you done in this remarkable plugin?
+--------------------------------------------------
+
+I have tried my best to make this plugin the most usable, extendable, and properly coded plugin I possibly can.  There will still be roadblocks and
+limitations, but I will work to remove them as soon as I identify them.  Please contact me with any questions, comments, or suggestions!
