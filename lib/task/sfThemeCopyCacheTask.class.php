@@ -7,7 +7,7 @@
  * @subpackage doctrine
  * @version    SVN: $Id: sfDoctrineGenerateAdminTask.class.php 28809 2010-03-26 17:19:58Z Jonathan.Wage $
  */
-class sfThemeCopyCacheTask extends sfGenerateThemeTask
+class sfThemeCopyCacheTask extends sfThemeGenerateTask
 {
   protected
     $options = array();

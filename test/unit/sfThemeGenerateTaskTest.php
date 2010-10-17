@@ -2,16 +2,16 @@
 
 include dirname(__FILE__).'/../bootstrap/bootstrap.php';
 
-$cleanup = new sfGenerateThemeTaskCleanup();
+$cleanup = new sfThemeGenerateTaskCleanup();
 $cleanup->cleanup();
 
 $project_dir    = sfConfig::get('sf_project_dir');
 $app_dir        = sfConfig::get('sf_app_dir');
 
-$t = new sfGenerateThemeLimeTest();
+$t = new sfThemeGenerateLimeTest();
 $t->configuration = $configuration;
 
-$t->diag('sfGenerateThemeTask');
+$t->diag('sfThemeGenerateTask');
 $t->task_ok(array('theme' => 'test'), array('application' => 'frontend', 'model' => 'Company', 'module' => 'company'));
 
 $t->ok(is_dir($app_dir.'/modules/company'), 'The "company" module has been generated');

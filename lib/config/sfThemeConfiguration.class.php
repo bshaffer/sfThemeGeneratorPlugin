@@ -21,16 +21,7 @@ abstract class sfThemeConfiguration
     }
   }
   
-  public function setup()
-  {
-    $this->askForApplication();
-
-    $this->askForModel();
-
-    $this->task->bootstrapSymfony($this->options['application'], $this->options['env']);
-    
-    $this->askForOption('module', null, sfInflector::underscore($this->options['model']));
-  }
+  abstract public function setup();
   
   public function execute()
   {
@@ -172,7 +163,7 @@ abstract class sfThemeConfiguration
       $this->options['model'] = $this->task->ask($text, null, $default);
     }
 
-    while (!is_dir(sfConfig::get('sf_apps_dir').'/'.$this->options['application']))
+    if (!class_exists($this->options['model']))
     {
       $this->task->logBlock('Model does not exist!', 'ERROR');
       $this->options['model'] = $this->task->ask($text, null, $default);

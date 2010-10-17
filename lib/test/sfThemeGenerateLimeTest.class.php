@@ -8,7 +8,7 @@
  * @author      Kris Wallsmith <kris.wallsmith@symfony-project.com>
  * @version     SVN: $Id: sfTaskExtraLimeTest.class.php 25032 2009-12-07 17:17:38Z Kris.Wallsmith $
  */
-class sfGenerateThemeLimeTest extends lime_test
+class sfThemeGenerateLimeTest extends lime_test
 {
   public $configuration;
 
@@ -25,12 +25,12 @@ class sfGenerateThemeLimeTest extends lime_test
   {
     if (null === $message)
     {
-      $message = sprintf('"sfGenerateThemeTask" execution %s', $boolean ? 'succeeded' : 'failed');
+      $message = sprintf('"sfThemeGenerateTask" execution %s', $boolean ? 'succeeded' : 'failed');
     }
 
     chdir(dirname(__FILE__).'/../../test/fixtures/project');
 
-    $task = new sfGenerateThemeTask($this->configuration->getEventDispatcher(), new sfFormatter());
+    $task = new sfThemeGenerateTask($this->configuration->getEventDispatcher(), new sfFormatter());
     $task->setConfiguration($this->configuration);
 
     try

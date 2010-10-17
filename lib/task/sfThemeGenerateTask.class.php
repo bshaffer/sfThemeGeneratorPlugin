@@ -15,7 +15,7 @@
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @version    SVN: $Id: sfDoctrineGenerateAdminTask.class.php 28809 2010-03-26 17:19:58Z Jonathan.Wage $
  */
-class sfGenerateThemeTask extends sfDoctrineGenerateModuleTask
+class sfThemeGenerateTask extends sfDoctrineGenerateModuleTask
 {
   /**
    * @see sfTask
@@ -31,8 +31,8 @@ class sfGenerateThemeTask extends sfDoctrineGenerateModuleTask
       new sfCommandOption('accept-defaults', null, sfCommandOption::PARAMETER_NONE, 'Accept all default theme options'),
     ));
 
-    $this->namespace = 'generate';
-    $this->name      = 'theme';
+    $this->namespace = 'theme';
+    $this->name      = 'generate';
     $this->aliases   = array('generate-theme');
     $this->briefDescription = 'Generates functionality in your project based on a theme';
 
@@ -85,6 +85,12 @@ EOF;
           $text = $default;
       }
       $question = sprintf('%s [%s]:', $question, $text);
+    }
+    
+    // Add colon to make it clear this is a PROMPT
+    if ($question[strlen($question)-1] !== ':') 
+    {
+      $question .= ':';
     }
 
     return parent::ask($question, $style, $default);

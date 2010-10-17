@@ -1,6 +1,6 @@
 <?php
 
-class sfGenerateThemeTaskCleanup
+class sfThemeGenerateTaskCleanup
 {
   protected 
     $modules   = null,

@@ -12,11 +12,11 @@ class sfTestFunctionalTheme extends sfTestFunctional
   {
     if ($lime == null) 
     {
-      $lime = new sfGenerateThemeLimeTest();
+      $lime = new sfThemeGenerateLimeTest();
       $lime->configuration = $browser->getContext()->getConfiguration();
     }
     
-    $this->cleanup = new sfGenerateThemeTaskCleanup();
+    $this->cleanup = new sfThemeGenerateTaskCleanup();
     $this->cleanup();
 
     parent::__construct($browser, $lime, $testers);
