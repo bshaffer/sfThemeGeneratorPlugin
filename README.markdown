@@ -1,11 +1,6 @@
 sfThemeGeneratorPlugin
 ======================
 
-Add custom themes.  Use a theme configuration class to handle how your theme impacts the application
-
-1. Prompt users for required fields
-2. Provide default values for other fields
-
 Why do we need a theme generator?
 ---------------------------------
 
@@ -19,46 +14,49 @@ It just wants to provide common hooks and methods you then use to provide your o
 How do I use a theme generator?
 -------------------------------
 
-Almost everyone won't have to.  The themes will be created by other developers and they'll just need this plugin to run the tasks.  This plugin
+Almost everyone won't have to.  The themes will be created by other developers and you will just need this plugin to run the tasks.  This plugin
 comes with a theme configuration for the "admin" and "default" themes bundled with symfony core.  
 
     # OLD AND BUSTED
     $ php symfony generate:module myapp my_model
     
     # NEW AND SEXY
-    $ php symfony generate:theme default
+    $ php symfony theme:generate default
     Application for this theme:
     $ frontend 
     Model for this theme:
     $ MyModel 
     Module for this theme [my_model]:
     $     
-    >> dir+      /path/to/project/apps/myapp/modules/my_model
-    >> dir+      /path/to/project/apps/myapp/modules/my_model/actions
-    >> file+     /path/to/project/apps/myapp/modules/my_model/actions/actions.class.php
-    >> dir+      /path/to/project/apps/myapp/modules/my_model/config
-    >> file+     /path/to/project/apps/myapp/modules/my_model/config/generator.yml
-    >> dir+      /path/to/project/apps/myapp/modules/my_model/templates
-    >> tokens    /path/to/project/apps/myapp/modules/my_model/actions/actions.class.php
-    >> tokens    /path/to/project/apps/myapp/modules/my_model/config/generator.yml
-    >> generate  Task complete.
 
-So why is this better?  Good question!  It's better because the task itself does not require any arguments other than the name of the theme.
-All the requirements are handled _in your theme_.  Well of course they are!  It makes so much sense.  The user is prompted for the required
-and optional arguments to create this theme.  Want to know what's also cool?  If you're a PRO and want to skip the prompt (this is also important
-when running tests) you can pass the options in directly.  This works transparently for every theme, as I've forced the task itself to allow any
+Notice the user is prompted for options they used to pass in up front.  So why is this better?  Good question!  It's better because the task itself 
+does not require any arguments other than the name of the theme. All the requirements are handled _in your theme_.  Well of course they are!  It 
+makes so much sense.  Want to know what's also cool?  If you're a PRO and want to skip the prompt (this is also important when running the task 
+outside the framework) you can pass the options in directly.  This works transparently for every theme, as the theme:generate task itself to allow any
 number of options:
 
-    # NEW AND SEXY
-    $ php symfony generate:theme default --application=frontend --model=MyModel --accept-defaults
-    >> dir+      /path/to/project/apps/myapp/modules/my_model
-    >> dir+      /path/to/project/apps/myapp/modules/my_model/actions
-    >> file+     /path/to/project/apps/myapp/modules/my_model/actions/actions.class.php
-    >> dir+      /path/to/project/apps/myapp/modules/my_model/config
-    >> file+     /path/to/project/apps/myapp/modules/my_model/config/generator.yml
-    >> dir+      /path/to/project/apps/myapp/modules/my_model/templates
-    >> tokens    /path/to/project/apps/myapp/modules/my_model/actions/actions.class.php
-    >> tokens    /path/to/project/apps/myapp/modules/my_model/config/generator.yml
-    >> generate  Task complete.
+    # This works too!
+    $ php symfony theme:generate default --application=frontend --model=MyModel --module=my_model
 
-Pretty cool, right?
+    # So does this!
+    $ php symfony theme:generate default --application=frontend --model=MyModel --accept-defaults
+
+Pretty cool, right?  So what else do you get with this plugin?  Check out my [sfSlimAdminGeneratorPlugin](http://github.com/bshaffer/sfSlimAdminGeneratorPlugin)
+to really see these themes in action.  You won't be disappointed!
+
+How do I create my own theme?
+-----------------------------
+
+Well aren't you ambitious? If you want to create your own theme, it's not very difficult.  Every theme must have a subclass of the sfThemeConfigration 
+class.  This controls how your theme is set up.
+
+Is there anything else really cool I should know about?
+-------------------------------------------------------
+
+In fact, there is exactly _one_ other cool thing you should know about.  This plugin comes with the _theme:copy-cache_ task, which takes all your
+generated code and sticks it *right in your module*!  Why is this fantastic?  If you hark back to the *main purpose of this plugin*, you may recall
+that purpose is to **provide an easy way to generate useful cached code**.  Because this code is useful, we often will want to pull it from cache
+and customize it from there.  It's great code, after all!  Use this task to copy over your files.  You will be prompted to overwrite existing files,
+so don't worry about that.
+
+
