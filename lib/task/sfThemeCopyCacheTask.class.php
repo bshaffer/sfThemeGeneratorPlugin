@@ -56,24 +56,26 @@ EOF;
     // Determine Paths
     $modulePath = sprintf('%s/%s', sfConfig::get('sf_app_module_dir'), $arguments['module']);
     $yamlPath   = sprintf('%s/%s', $modulePath, 'config/generator.yml');
-    
+    $cachePath  = sprintf('%s/auto%s', sfConfig::get('sf_module_cache_dir'), ucfirst($arguments['module']));
+
     // Verify module is valid
     if (!file_exists($yamlPath))
     {
       throw new InvalidArgumentException('The module specified does not exist in cache.  A generator.yml file is required.');
     }
-
+    
     include($this->context->getConfigCache()->checkConfig($yamlPath));
     
-    $cachePath = sprintf('%s/auto%s', sfConfig::get('sf_module_cache_dir'), ucfirst($arguments['module']));
+    // Get theme configuration
+    $config = sfYaml::load($yamlPath);
+
+    $this->themeConfiguration = $this->getThemeConfiguration(isset($config['generator']['param']['theme']) ? $config['generator']['param']['theme'] : null);
 
     $this->setOptions($arguments, $options);
-
     $this->doCopy($cachePath, $modulePath);
     
     // Comment out generator.yml file
     file_put_contents($yamlPath, preg_replace('/(^|\n)/', '\1# ', file_get_contents($yamlPath)));
-    
     $this->logSection('generator.yml', 'Commented out "generator.yml - no longer pulling from cache"');
   }
   
@@ -89,8 +91,8 @@ EOF;
       if (!file_exists($toFile) || $this->options['force'] || $this->ask(sprintf('file %s exists.  Overwrite? (y/n)', $file), null, 'n') == 'y') 
       {
         $this->logSection('file+', $toFile);
+        $this->themeConfiguration->filterGeneratedFile($fromDir .'/'. $file);
         $this->getFilesystem()->copy($fromDir .'/'. $file, $toFile, array('override' => true));
-        $this->filterGeneratedFile($toFile);
       }
       else
       {
@@ -98,20 +100,7 @@ EOF;
       }
     }
   }
-  
-  protected function filterGeneratedFile($file)
-  {
-    switch (true) 
-    {
-      case strpos($file, 'actions.class.php') !== false:
-        $contents = file_get_contents($file);
-        $search   = sprintf('abstract class auto%sActions', ucfirst($this->options['module']));
-        $replace  = sprintf('class %sActions', $this->options['module']);
-        file_put_contents($file, str_replace($search, $replace, $contents));
-        break;
-    }
-  }
-  
+    
   protected function setOptions($arguments, $options)
   {
     $this->options = array_merge($arguments, $options);

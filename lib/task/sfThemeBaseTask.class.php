@@ -5,6 +5,17 @@
 */
 abstract class sfThemeBaseTask extends sfDoctrineGenerateModuleTask
 {
+  protected function getThemeConfiguration($theme = null)
+  {
+    // Get Theme Configuration
+    if (!class_exists($configClass = sprintf('sf%sThemeConfiguration', sfInflector::camelize($theme)))) 
+    {
+      throw new InvalidArgumentException(sprintf('No theme configuration class exists for "%s".  Please create a %s class', $theme, $configClass));
+    }
+
+    return new $configClass($this, array_merge($this->commandManager->getArgumentValues(), $this->commandManager->getOptionValues()));
+  }
+  
   public function ask($question, $style = 'QUESTION', $default = null)
   {
     if ($default !== null) 

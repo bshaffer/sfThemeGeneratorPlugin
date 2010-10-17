@@ -1,6 +1,6 @@
 <?php
 
-abstract class sfThemeConfiguration
+class sfThemeConfiguration
 {
   protected 
     $task       = null,
@@ -12,21 +12,15 @@ abstract class sfThemeConfiguration
   {
     $this->task = $task;
     $this->options = $options;
-    
-    if (!$this->theme) 
-    {
-      throw new sfException(
-        sprintf('No theme for class %s: You must set the protected $theme property in your sfThemeConfiguration subclass.', get_class($this))
-      );
-    }
   }
   
-  abstract public function setup();
+  // Method to prompt users for your theme's options
+  public function setup()
+  {}
   
+  // Optional method to perform options after task has run
   public function cleanup()
-  {
-    // Optional method to perform options after task has run
-  }
+  {}
   
   public function execute()
   {
@@ -84,6 +78,13 @@ abstract class sfThemeConfiguration
   
   public function doCopy()
   {
+    if (!$this->theme) 
+    {
+      throw new sfException(
+        sprintf('No theme for class %s: You must set the protected $theme property in your sfThemeConfiguration subclass.', get_class($this))
+      );
+    }
+
     // Copy over files in theme
     $finder = sfFinder::type('any')->discard('.sf');
     
@@ -209,6 +210,8 @@ abstract class sfThemeConfiguration
     }
   }
   
+  public function filterGeneratedFile($file)
+  {}
   
   protected function getFilesystem()
   {

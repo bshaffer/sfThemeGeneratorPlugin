@@ -22,9 +22,11 @@ class sfDefaultThemeConfiguration extends sfThemeConfiguration
 
     $this->constants['CONFIG'] = sprintf(<<<EOF
     model_class:           %s
+    theme:                 %s
 EOF
       ,
-      $this->options['model']
+      $this->options['model'],
+      $this->theme
     );
   }
   
@@ -40,6 +42,20 @@ EOF
       $moduleDir = sfConfig::get('sf_app_module_dir').'/'.$this->options['module'];
       $this->getFilesystem()->remove($moduleDir.'/config/generator.yml');
       $this->getFilesystem()->remove($moduleDir.'/config');
+    }
+  }
+  
+  public function filterGeneratedFile($file)
+  { 
+    switch (true) 
+    {
+      // Rename class in actions.class.php
+      case strpos($file, 'actions.class.php') !== false:
+        $contents = file_get_contents($file);
+        $search   = sprintf('auto%sActions', ucfirst($this->options['module']));
+        $replace  = sprintf('%sActions', $this->options['module']);
+        file_put_contents($file, str_replace($search, $replace, $contents));
+        break;
     }
   }
 }

@@ -71,4 +71,18 @@ EOF
 
     return $routes;
   }
+  
+  public function filterGeneratedFile($file)
+  {
+    switch (true) 
+    {
+      // Rename class in actions.class.php
+      case strpos($file, 'actions.class.php') !== false:
+        $contents = file_get_contents($file);
+        $search   = sprintf('abstract class auto%sActions', ucfirst($this->options['module']));
+        $replace  = sprintf('class %sActions', $this->options['module']);
+        file_put_contents($file, str_replace($search, $replace, $contents));
+        break;
+    }
+  }
 }

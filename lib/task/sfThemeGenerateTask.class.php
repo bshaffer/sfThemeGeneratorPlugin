@@ -50,15 +50,9 @@ EOF;
    */
   protected function execute($arguments = array(), $options = array())
   {
-    // Get Theme Configuration
-    if (!class_exists($configClass = sprintf('sf%sThemeConfiguration', sfInflector::camelize($arguments['theme'])))) 
-    {
-      $configClass = 'sfDefaultThemeConfiguration';
-    }
-    
     $databaseManager = new sfDatabaseManager($this->configuration);
 
-    $this->themeConfiguration = new $configClass($this, $this->commandManager->getOptionValues());
+    $this->themeConfiguration = $this->getThemeConfiguration($arguments['theme']);
 
     $this->themeConfiguration->setup();
     $this->themeConfiguration->execute();

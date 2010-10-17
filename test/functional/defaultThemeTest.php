@@ -23,7 +23,9 @@ $browser->info('1. - Test generated module actions')
   ->info('  1.2 - Run generate:theme task')
   
   ->runTask('sfThemeGenerateTask', array('theme' => 'default'), array('application' => 'frontend', 'model' => 'Company', 'module' => 'company'))
-
+;
+sfToolkit::clearDirectory(sfConfig::get('app_cache_dir'));
+$browser
   ->info('  1.3 - We\'ve got ourselves a default theme module!')
   ->get('/company')
     ->isModuleAction('company', 'index')
