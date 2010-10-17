@@ -5,7 +5,7 @@ Why do we need a theme generator?
 ---------------------------------
 
 The Theme Generator exists for _one reason_: to **provide an easy way to generate useful cached code**.  The module generator 
-that comes bundled with symfony is impossible to extend.  There is an impossible amount of hardcoded logic, a giant wad of 
+that comes bundled with symfony is very difficult to extend.  There is an impossible amount of hardcoded logic, a giant wad of 
 mind-numbingly complex code, and too many obstacles standing in the way of you and a happy way to generate code.  The sfThemeGeneratorPlugin
 provides a framework that is much more Object Oriented, flexible, and easy to understand.  It's very shy, and tries to stay out of your way.
 It just wants to provide common hooks and methods you then use to provide your own theme to your users.
@@ -15,7 +15,7 @@ How do I use a theme generator?
 -------------------------------
 
 Almost everyone won't have to.  The themes will be created by other developers and you will just need this plugin to run the tasks.  This plugin
-comes with a theme configuration for the "admin" and "default" themes bundled with symfony core.  
+comes with a theme configuration for the `admin` and `default` themes bundled with symfony core.  
 
     # OLD AND BUSTED
     $ php symfony generate:module myapp my_model
@@ -27,7 +27,7 @@ comes with a theme configuration for the "admin" and "default" themes bundled wi
     Model for this theme:
     $ MyModel 
     Module for this theme [my_model]:
-    $     
+    $ my_model
 
 Notice the user is prompted for options they used to pass in up front.  So why is this better?  Good question!  It's better because the task itself 
 does not require any arguments other than the name of the theme. All the requirements are handled _in your theme_.  Well of course they are!  It 
@@ -48,7 +48,11 @@ How do I create my own theme?
 -----------------------------
 
 Well aren't you ambitious? If you want to create your own theme, it's not very difficult.  Every theme must have a subclass of the sfThemeConfigration 
-class.  This controls how your theme is set up.
+class.  This controls how your theme is set up.  Your configuration class is mainly responsible for the following things:
+
+- Prompting users for the information needed to generate your theme. (setup() method)
+- Adding routes to the application's routing.yml (routesToPrepend() method)
+- Copying the files from one location (your plugin) to another location in the application (filesToCopy() method)
 
 Is there anything else really cool I should know about?
 -------------------------------------------------------

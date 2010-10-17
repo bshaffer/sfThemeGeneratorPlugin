@@ -33,7 +33,15 @@ class sfThemeGenerateTaskCleanup
     }
     
     // Clear routing.yml file  
-    file_put_contents(sfConfig::get('sf_app_config_dir').'/routing.yml', '');
+    file_put_contents(sfConfig::get('sf_app_config_dir').'/routing.yml', <<<EOF
+default_index:
+  url:   /:module
+  param: { action: index }
+
+default:
+  url:   /:module/:action/*
+EOF
+);
   }
 
   protected function getModules()

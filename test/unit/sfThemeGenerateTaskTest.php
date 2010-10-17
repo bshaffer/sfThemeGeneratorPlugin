@@ -12,7 +12,7 @@ $t = new sfThemeGenerateLimeTest();
 $t->configuration = $configuration;
 
 $t->diag('sfThemeGenerateTask');
-$t->task_ok(array('theme' => 'test'), array('application' => 'frontend', 'model' => 'Company', 'module' => 'company'));
+$t->task_ok('sfThemeGenerateTask', array('theme' => 'test'), array('application' => 'frontend', 'model' => 'Company', 'module' => 'company'));
 
 $t->ok(is_dir($app_dir.'/modules/company'), 'The "company" module has been generated');
 $t->ok(file_exists($app_dir.'/templates/custom.php'), 'The "custom.php" file (outside the module directory) has been copied correctly');

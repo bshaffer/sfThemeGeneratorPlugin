@@ -29,9 +29,9 @@ class sfTestFunctionalTheme extends sfTestFunctional
     return $this;
   }
   
-  public function runTask($arguments = array(), $options = array(), $boolean = true, $message = null)
+  public function runTask($class, $arguments = array(), $options = array(), $boolean = true, $message = null)
   {
-    $this->test()->task_ok($arguments, $options, $boolean, $message);
+    $this->test()->task_ok($class, $arguments, $options, $boolean, $message);
     
     sfToolkit::clearDirectory(sfConfig::get('sf_cache_dir'));
     

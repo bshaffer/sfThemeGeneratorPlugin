@@ -21,16 +21,16 @@ class sfThemeGenerateLimeTest extends lime_test
    * 
    * @return  boolean
    */
-  public function task_ok(array $arguments = array(), array $options = array(), $boolean = true, $message = null)
+  public function task_ok($class, array $arguments = array(), array $options = array(), $boolean = true, $message = null)
   {
     if (null === $message)
     {
-      $message = sprintf('"sfThemeGenerateTask" execution %s', $boolean ? 'succeeded' : 'failed');
+      $message = sprintf('"%s" execution %s', $class, $boolean ? 'succeeded' : 'failed');
     }
 
     chdir(dirname(__FILE__).'/../../test/fixtures/project');
 
-    $task = new sfThemeGenerateTask($this->configuration->getEventDispatcher(), new sfFormatter());
+    $task = new $class($this->configuration->getEventDispatcher(), new sfFormatter());
     $task->setConfiguration($this->configuration);
 
     try

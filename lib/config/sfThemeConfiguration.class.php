@@ -23,6 +23,11 @@ abstract class sfThemeConfiguration
   
   abstract public function setup();
   
+  public function cleanup()
+  {
+    // Optional method to perform options after task has run
+  }
+  
   public function execute()
   {
     $this->addThemeRoutes();

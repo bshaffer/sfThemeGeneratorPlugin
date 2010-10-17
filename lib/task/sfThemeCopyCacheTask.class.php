@@ -24,6 +24,7 @@ class sfThemeCopyCacheTask extends sfThemeGenerateTask
 
     $this->addOptions(array(
       new sfCommandOption('env', null, sfCommandOption::PARAMETER_REQUIRED, 'The environment', 'dev'),
+      new sfCommandOption('force', 'f', sfCommandOption::PARAMETER_NONE, 'Overwrites all existing files'),
     ));
 
     $this->namespace = 'theme';
@@ -61,7 +62,7 @@ EOF;
     {
       throw new InvalidArgumentException('The module specified does not exist in cache.  A generator.yml file is required.');
     }
-    
+
     include($this->context->getConfigCache()->checkConfig($yamlPath));
     
     $cachePath = sprintf('%s/auto%s', sfConfig::get('sf_module_cache_dir'), ucfirst($arguments['module']));
@@ -80,11 +81,12 @@ EOF;
   {
     // Copy over files in theme
     $files = sfFinder::type('file')->relative()->in($fromDir);
-    
+
     foreach ($files as $file) 
     {
       $toFile = $toDir . '/' . $file;
-      if (!file_exists($toFile) || $this->ask(sprintf('file %s exists.  Overwrite? (y/n)', $file), null, 'n') == 'y') 
+
+      if (!file_exists($toFile) || $this->options['force'] || $this->ask(sprintf('file %s exists.  Overwrite? (y/n)', $file), null, 'n') == 'y') 
       {
         $this->logSection('file+', $toFile);
         $this->getFilesystem()->copy($fromDir .'/'. $file, $toFile, array('override' => true));
