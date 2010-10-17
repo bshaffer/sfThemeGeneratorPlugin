@@ -41,7 +41,7 @@ number of options:
     # So does this!
     $ php symfony theme:generate default --application=frontend --model=MyModel --accept-defaults
 
-Pretty cool, right?  So what else do you get with this plugin?  Check out my [sfSlimAdminGeneratorPlugin](http://github.com/bshaffer/sfSlimAdminGeneratorPlugin)
+Pretty cool, right?  So what else do you get with this plugin?  Check out my [sfHadoriThemePlugin](http://github.com/bshaffer/sfHadoriThemePlugin)
 to really see these themes in action.  You won't be disappointed!
 
 How do I create my own theme?
