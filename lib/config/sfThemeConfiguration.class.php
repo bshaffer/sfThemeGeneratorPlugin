@@ -134,7 +134,8 @@ abstract class sfThemeConfiguration
   
   public function initConstants()
   {
-    $properties = parse_ini_file(sfConfig::get('sf_config_dir').'/properties.ini', true);
+    $propertiesPath = sfConfig::get('sf_config_dir').'/properties.ini';
+    $properties     = file_exists($propertiesPath) ? parse_ini_file($propertiesPath, true) : array();
     
     $this->constants = array(
       'PROJECT_NAME'   => isset($properties['symfony']['name']) ? $properties['symfony']['name'] : 'symfony',

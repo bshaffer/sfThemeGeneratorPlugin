@@ -1,7 +1,7 @@
 <?php
 
 // test the process of viewing and saving editable areas
-require_once dirname(__FILE__).'/../bootstrap/functional.php';
+require_once dirname(__FILE__).'/../bootstrap/bootstrap.php';
 
 Doctrine_Query::create()->from('Company')->delete()->execute();
 $company = new Company();
