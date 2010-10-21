@@ -160,4 +160,9 @@ class sfThemeGenerator extends sfDoctrineGenerator
 
     return $this->asPhp($this->getModuleName().'/'.$action);
   }
+  
+  public function getFormClass()
+  {
+    return $this->get('form_class', $this->getModelClass().'Form');
+  }
 }

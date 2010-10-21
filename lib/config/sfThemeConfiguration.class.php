@@ -155,7 +155,7 @@ class sfThemeConfiguration
       $this->options['application'] = $this->task->ask($text, null, $default);
     }
 
-    while (!is_dir(sfConfig::get('sf_apps_dir').'/'.$this->options['application']))
+    while (!$this->options['application'] || !is_dir(sfConfig::get('sf_apps_dir').'/'.$this->options['application']))
     {
       $this->task->logBlock('Application does not exist!', 'ERROR');
       $this->options['application'] = $this->task->ask($text, null, $default);
@@ -169,7 +169,7 @@ class sfThemeConfiguration
       $this->options['model'] = $this->task->ask($text, null, $default);
     }
 
-    if (!class_exists($this->options['model']))
+    if (!$this->options['model'] || !class_exists($this->options['model']))
     {
       $this->task->logBlock('Model does not exist!', 'ERROR');
       $this->options['model'] = $this->task->ask($text, null, $default);

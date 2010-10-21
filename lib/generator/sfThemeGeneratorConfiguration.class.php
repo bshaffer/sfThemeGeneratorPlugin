@@ -23,7 +23,6 @@ abstract class sfThemeGeneratorConfiguration extends sfModelGeneratorConfigurati
         $fields[$name]['label'] = sfInflector::humanize($name);
       }
     }
-    
 
     return $fields;
   }
