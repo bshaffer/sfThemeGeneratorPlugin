@@ -3,8 +3,8 @@
 class sfThemeGenerator extends sfDoctrineGenerator
 {
   protected
-    $options = array();
-
+    $options = array(),
+    $availableConfigs = array();
 
   // Render text in HTML
   public function renderText($text)
@@ -22,8 +22,7 @@ class sfThemeGenerator extends sfDoctrineGenerator
   {
     if (isset($params['credentials']))
     {
-      return sprintf("
-[?php if (\$sf_user->hasCredential(%s)): ?]
+      return sprintf("[?php if (\$sf_user->hasCredential(%s)): ?]
 ", $this->asPhp($params['credentials']));
     }
   }
@@ -54,7 +53,11 @@ class sfThemeGenerator extends sfDoctrineGenerator
 
   public function get($config, $default = null)
   {
-    return isset($this->options[$config]) ? $this->options[$config] : $default;
+    if (isset($this->options[$config])) {
+      return $this->options[$config];
+    }
+    
+    return $default;
   }
   
   public function configToOptions($configs, $prefix = '')
@@ -71,12 +74,15 @@ class sfThemeGenerator extends sfDoctrineGenerator
     }
   }
   
+  /**
+   * Loads the configuration for this generated module.
+   */
   protected function loadConfiguration()
   {
-    $this->configToOptions($this->params);
+    $this->params['singular_name'] = $this->getSingularName();
     $this->configToOptions($this->config);
+    $this->configToOptions($this->params);
 
-    // This needs to be refactored to not be so shitty
     try
     {
       $this->generatorManager->getConfiguration()->getGeneratorTemplate($this->getGeneratorClass(), $this->getTheme(), '../parts/configuration.php');
@@ -92,12 +98,13 @@ class sfThemeGenerator extends sfDoctrineGenerator
       throw new LogicException('The sfModelGenerator can only operates with an application configuration.');
     }
 
-    $basePath = $this->getGeneratedModuleName().'/lib/Base'.ucfirst($this->getModuleName()).'GeneratorConfiguration.class.php';
+    $basePath = $this->getGeneratedModuleName().'/lib/'.$this->getModuleName().'GeneratorConfiguration.class.php';
     $this->getGeneratorManager()->save($basePath, $this->evalTemplate('../parts/configuration.php'));
 
     require_once $this->getGeneratorManager()->getBasePath().'/'.$basePath;
 
     $class = 'Base'.ucfirst($this->getModuleName()).'GeneratorConfiguration';
+
     foreach ($config->getLibDirs($this->getModuleName()) as $dir)
     {
       if (!is_file($configuration = $dir.'/'.$this->getModuleName().'GeneratorConfiguration.class.php'))
@@ -109,23 +116,21 @@ class sfThemeGenerator extends sfDoctrineGenerator
       $class = $this->getModuleName().'GeneratorConfiguration';
       break;
     }
-    
-    $generatorConfiguration = new $class();
-    $generatorConfiguration->validateConfig($this->config);
 
-    $this->configToOptions($generatorConfiguration->getConfiguration());
-    
-    return $generatorConfiguration;
+    $configuration = new $class();
+    $this->configToOptions($configuration->getConfiguration());
+
+    return $configuration;
   }
-  
+
   public function linkTo($action, $params)
   {
     $action = strpos($action, '_') === 0 ? substr($action, 1) : $action;
-    
+
     $params = array_merge(array('attributes' => array('class' => $action)), $params);
         
     $method = sprintf('linkTo%s', ucwords(sfInflector::camelize($action)));
-    
+
     $link = method_exists($this, $method) ? $this->$method($params) : $this->getLinkToAction($action, $params, true);
     
     return $this->addCredentialCondition($link, $params);
@@ -164,5 +169,51 @@ class sfThemeGenerator extends sfDoctrineGenerator
   public function getFormClass()
   {
     return $this->get('form_class', $this->getModelClass().'Form');
+  }
+  
+  protected function validateParameters($params)
+  {
+    foreach (array('model_class', 'moduleName') as $key)
+    {
+      if (!isset($params[$key]))
+      {
+        throw new sfParseException(sprintf('sfModelGenerator must have a "%s" parameter.', $key));
+      }
+    }
+
+    if (!class_exists($params['model_class']))
+    {
+      throw new sfInitializationException(sprintf('Unable to generate a module for non-existent model "%s".', $params['model_class']));
+    }
+
+    if (isset($params['config'])) {
+      $this->checkConfigIsValid($params['config'], $this->availableConfigs);
+      $this->config = $params['config'];
+    }
+    else {
+      $this->config = array();
+    }
+
+    unset($params['config']);
+    $this->params = $params;
+  }
+  
+  public function checkConfigIsValid($configs, $available)
+  {
+    if ($available !== array()) // all options pass for "array()"
+    {
+      foreach ($configs as $key => $config) 
+      {
+        if (!isset($available[$key])) 
+        {
+          throw new InvalidArgumentException(sprintf('Configuration key "%s" is invalid.', $key));
+        }
+      
+        if (is_array($config) && is_array($available[$key])) 
+        {
+          $this->checkConfigIsValid($config, $available[$key]);
+        }
+      }
+    }
   }
 }
