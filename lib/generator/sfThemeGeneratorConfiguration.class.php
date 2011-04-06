@@ -1,44 +1,49 @@
 <?php
 
 /**
-* 
+*
 */
 abstract class sfThemeGeneratorConfiguration extends sfOldAndBustedGeneratorConfiguration
 {
+  protected
+    $options;
+
   /**
    * Constructor.
    */
-  public function __construct()
+  public function __construct($configs, $options)
   {
-    $this->compile();
+    $this->options = $options;
+    $this->compile($configs);
   }
 
-  public function mergeFieldConfiguration($fields)
+  public function getConfigValue($config, $default = null)
   {
-    $defaults = $this->getFieldsDefault();
-    foreach ($fields as $name => $fieldConfig) 
+    if (isset($this->configuration[$config]))
     {
-      $fields[$name] = array_merge(
-            isset($defaults[$name]) ? $defaults[$name] : array(),
-            $fieldConfig);
-            
-      // Ensure every field has a default label
-      if (!isset($fields[$name]['label'])) 
-      {
-        $fields[$name]['label'] = sfInflector::humanize($name);
-      }
+      return $this->configuration[$config];
     }
 
-    return $fields;
+    return $default;
   }
-  
-  public function getFilterFields()
+
+  public function getOptionValue($name, $default = null)
   {
-    return $this->mergeFieldConfiguration($this->getFieldsFilter());
+    if (isset($this->options[$name]))
+    {
+      return $this->options[$name];
+    }
+
+    return $default;
   }
-  
+
   public function getConfiguration()
   {
     return $this->configuration;
+  }
+
+  protected function getDefaultConfiguration()
+  {
+    return array();
   }
 }

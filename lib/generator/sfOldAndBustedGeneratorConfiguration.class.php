@@ -15,15 +15,7 @@ abstract class sfOldAndBustedGeneratorConfiguration
   protected
     $configuration = array();
 
-  /**
-   * Constructor.
-   */
-  public function __construct()
-  {
-    $this->compile();
-  }
-
-  protected function compile()
+  protected function compile($config)
   {
     $config = $this->getConfig();
 

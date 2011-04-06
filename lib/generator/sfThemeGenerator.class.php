@@ -6,18 +6,130 @@ class sfThemeGenerator extends sfDoctrineGenerator
     $options = array(),
     $availableConfigs = array();
 
-  // Render text in HTML
-  public function renderText($text)
+  public function get($config, $default = null)
   {
+    if (isset($this->options[$config])) {
+      return $this->options[$config];
+    }
+
+    return $default;
+  }
+
+  // Render text in HTML
+  public function renderHtmlText($text)
+  {
+    if ($this->get('i18n')) {
+      $text = sprintf('<?php echo __(\'%s\', array(), \''. $this->getI18nCatalogue().'\') ?>', $this->escapeString($text));
+      return $this->replaceTokens($text, 'php');
+    }
+
+    return $this->replaceTokens($text, 'html');
+  }
+
+  // Render text in a PHP block
+  public function renderPhpText($text)
+  {
+    $text = $this->asPhp($this->replaceTokens($text, 'php'));
+    
+    if ($this->get('i18n')) {
+      $text = sprintf('__(%s, array(), \''. $this->getI18nCatalogue().'\')', $text);
+    }
+    
     return $text;
   }
-  
-  // Render text in a PHP block
-  public function renderTextInBlock($text)
+
+  // Render text that will appear in a php array
+  public function renderPhpArrayText($text)
   {
-    return $this->asPhp($text);
+    if ($this->get('i18n')) {
+      $text = sprintf('||__(\'%s\', array(), \''. $this->getI18nCatalogue().'\')||', $text);
+    }
+    
+    return $text;
   }
-  
+
+  public function replaceTokens($string, $format = 'html')
+  {
+    $tr1 = array();
+    $tr2 = array();
+    $renderTextAsBlock = false;
+    
+    preg_match_all('/\'\|\|(.*?)\|\|\'/', $string, $matches, PREG_PATTERN_ORDER);
+
+    if (count($matches[1])) {
+      foreach ($matches[1] as $i => $name)
+      {
+        $tr1[$matches[0][$i]] = $this->unescapeString($name);
+      }
+    }
+    
+    preg_match_all('/%%([^%]+)%%/', $string, $matches, PREG_PATTERN_ORDER);
+    
+    if (count($matches[1])) {
+      $renderTextAsBlock = false;
+    
+      foreach ($matches[1] as $i => $name)
+      {
+        if ($value = $this->get($name)) {
+          $tr2[$matches[0][$i]] = $value;
+        }
+        else {
+          $renderTextAsBlock = true;
+          $getter  = $name == 'to_string' ? '$'.$this->getSingularName() : $this->getColumnGetter($name, true);
+          $tr2[$matches[0][$i]]  = sprintf("'.%s.'", $getter);
+        }
+      }
+    }
+
+    if ($renderTextAsBlock) {
+      switch ($format) {
+        case 'html':
+          $string = $this->renderTextInPhpBlock($this->escapeString($string));
+          break;
+
+        case 'php':
+          break;
+      }
+    }
+    
+    if ($tr1) {
+      $string = strtr($string, $tr1);
+    }
+    
+    if ($tr2) {
+      $string = strtr($string, $tr2);
+    }
+    return $this->clearEmptyStrings($string);
+  }
+
+  public function renderTextInPhpBlock($text)
+  {
+    if (strpos($text, '<?php') !== 0) {
+      $text = sprintf('<?php echo \'%s\' ?>', $text);
+    }
+
+    return $text;
+  }
+
+  public function clearEmptyStrings($text)
+  {
+    if (strpos($text, "''.") === 0) {
+      $text = substr($text, 3);
+    }
+    
+    if (strpos(strrev($text), "''.") === 0) {
+      $text = strrev(substr(strrev($text), 3));
+    }
+    
+    return strtr($text, array(
+      ".''." => '.',
+      "(''." => '(',
+      ", ''." => ', ',
+      ".'')" => ')',
+      ".''," => ',',
+    ));
+  }
+
   public function startCredentialCondition($params = array())
   {
     if (isset($params['credentials']))
@@ -26,7 +138,7 @@ class sfThemeGenerator extends sfDoctrineGenerator
 ", $this->asPhp($params['credentials']));
     }
   }
-  
+
   public function endCredentialCondition($params)
   {
     if (isset($params['credentials']))
@@ -47,25 +159,16 @@ class sfThemeGenerator extends sfDoctrineGenerator
 [?php endif; ?]
 ", $credentials, $content);
     }
-    
+
     return $content;
   }
 
-  public function get($config, $default = null)
-  {
-    if (isset($this->options[$config])) {
-      return $this->options[$config];
-    }
-    
-    return $default;
-  }
-  
   public function configToOptions($configs, $prefix = '')
   {
-    foreach ($configs as $name => $config) 
+    foreach ($configs as $name => $config)
     {
       $name = $prefix ? $prefix.'_'.$name : $name;
-      if (is_array($config)) 
+      if (is_array($config))
       {
         $this->configToOptions($config, $name);
       }
@@ -73,69 +176,21 @@ class sfThemeGenerator extends sfDoctrineGenerator
       $this->options[$name] = $config;
     }
   }
-  
-  /**
-   * Loads the configuration for this generated module.
-   */
-  protected function loadConfiguration()
-  {
-    $this->params['singular_name'] = $this->getSingularName();
-    $this->configToOptions($this->config);
-    $this->configToOptions($this->params);
-
-    try
-    {
-      $this->generatorManager->getConfiguration()->getGeneratorTemplate($this->getGeneratorClass(), $this->getTheme(), '../parts/configuration.php');
-    }
-    catch (sfException $e)
-    {
-      return null;
-    }
-
-    $config = $this->getGeneratorManager()->getConfiguration();
-    if (!$config instanceof sfApplicationConfiguration)
-    {
-      throw new LogicException('The sfModelGenerator can only operates with an application configuration.');
-    }
-
-    $basePath = $this->getGeneratedModuleName().'/lib/'.$this->getModuleName().'GeneratorConfiguration.class.php';
-    $this->getGeneratorManager()->save($basePath, $this->evalTemplate('../parts/configuration.php'));
-
-    require_once $this->getGeneratorManager()->getBasePath().'/'.$basePath;
-
-    $class = 'Base'.ucfirst($this->getModuleName()).'GeneratorConfiguration';
-
-    foreach ($config->getLibDirs($this->getModuleName()) as $dir)
-    {
-      if (!is_file($configuration = $dir.'/'.$this->getModuleName().'GeneratorConfiguration.class.php'))
-      {
-        continue;
-      }
-
-      require_once $configuration;
-      $class = $this->getModuleName().'GeneratorConfiguration';
-      break;
-    }
-
-    $configuration = new $class();
-    $this->configToOptions($configuration->getConfiguration());
-
-    return $configuration;
-  }
 
   public function linkTo($action, $params)
   {
     $action = strpos($action, '_') === 0 ? substr($action, 1) : $action;
 
-    $params = array_merge(array('attributes' => array('class' => $action)), $params);
-        
+    $forObject = isset($params['object_link']) && $params['object_link'];
+
+    $params = array_merge(array('class' => $action), $params);
+
     $method = sprintf('linkTo%s', ucwords(sfInflector::camelize($action)));
 
-    $link = method_exists($this, $method) ? $this->$method($params) : $this->getLinkToAction($action, $params, true);
-    
+    $link = method_exists($this, $method) ? $this->$method($params) : $this->getLinkToAction($action, $params, $forObject);
+
     return $this->addCredentialCondition($link, $params);
   }
-  
 
   /**
    * Returns HTML code for an action link.
@@ -149,12 +204,50 @@ class sfThemeGenerator extends sfDoctrineGenerator
   public function getLinkToAction($actionName, $params, $pk_link = false)
   {
     $action = isset($params['action']) ? $params['action'] : 'List'.sfInflector::camelize($actionName);
+    $label  = isset($params['label']) ? $params['label'] : sfInflector::humanize($actionName);
+    if (isset($params['confirm'])) {
+      $params['confirm'] = $this->renderPhpArrayText($params['confirm']);
+    }
+
+    if (isset($params['title'])) {
+      $params['title'] = $this->renderPhpArrayText($params['title']);
+    }
+
+    // Not a "link_to" attribute
+    unset($params['action'], $params['label'], $params['object_link']);
 
     $url_params = $pk_link ? '?'.$this->getPrimaryKeyUrlParams() : '\'';
 
-    return '[?php echo link_to(\''.$params['label'].'\', \''.$this->getModuleName().'/'.$action.$url_params.', '.$this->asPhp($params['params']).') ?]';
+    return $this->replaceTokens(sprintf('[?php echo link_to(%s, \'%s/%s, %s) ?]', $this->renderPhpText($label), $this->getModuleName(), $action.$url_params, $this->renderArray($params)), 'php');
   }
-  
+
+  public function renderArray($array)
+  {
+    return $this->asPhp($array);
+  }
+
+  public function getClassLabel()
+  {
+    return $this->get('class_label', $this->getModelClass());
+  }
+
+  /**
+   * Loads the configuration for this generated module.
+   */
+  protected function loadConfiguration()
+  {
+    $this->configToOptions($this->config);
+    $this->configToOptions($this->params);
+    $this->options['singular_name'] = $this->getSingularName();
+    $this->options['class_label']   = $this->getClassLabel();
+
+    $class = $this->getConfigurationClass();
+    $configuration = new $class($this->config, $this->params);
+    $this->configToOptions($configuration->getConfiguration());
+
+    return $configuration;
+  }
+
   public function urlFor($action, $routeName = true)
   {
     if (isset($this->params['route_prefix']))
@@ -165,12 +258,63 @@ class sfThemeGenerator extends sfDoctrineGenerator
 
     return $this->asPhp($this->getModuleName().'/'.$action);
   }
-  
+
   public function getFormClass()
   {
     return $this->get('form_class', $this->getModelClass().'Form');
   }
-  
+
+  /**
+   * Generates classes and templates in cache.
+   *
+   * @param array $params The parameters
+   *
+   * @return string The data to put in configuration cache
+   */
+  public function generate($params = array())
+  {
+    $this->validateParameters($params);
+
+    $this->modelClass = $this->params['model_class'];
+
+    // generated module name
+    $this->setModuleName($this->params['moduleName']);
+    $this->setGeneratedModuleName('auto'.ucfirst($this->params['moduleName']));
+
+    // theme exists?
+    $theme = isset($this->params['theme']) ? $this->params['theme'] : 'default';
+    $this->setTheme($theme);
+    $themeDir = $this->generatorManager->getConfiguration()->getGeneratorTemplate($this->getGeneratorClass(), $theme, '');
+    if (!is_dir($themeDir))
+    {
+      throw new sfConfigurationException(sprintf('The theme "%s" does not exist.', $theme));
+    }
+
+    // configure the model
+    $this->configure();
+
+    $this->configuration = $this->loadConfiguration();
+
+    $files = $this->getPhpFilesToGenerate($themeDir);
+
+    // generate files
+    $this->generatePhpFiles($this->generatedModuleName, $files);
+
+    // move helper file
+    if (file_exists($file = $this->generatorManager->getBasePath().'/'.$this->getGeneratedModuleName().'/lib/helper.php'))
+    {
+      @rename($file, $this->generatorManager->getBasePath().'/'.$this->getGeneratedModuleName().'/lib/Base'.ucfirst($this->moduleName).'GeneratorHelper.class.php');
+    }
+
+    return "require_once(sfConfig::get('sf_module_cache_dir').'/".$this->generatedModuleName."/actions/actions.class.php');";
+  }
+
+  // Provides a hook to change generated files
+  protected function getPhpFilesToGenerate($themeDir)
+  {
+    return sfFinder::type('file')->relative()->in($themeDir);
+  }
+
   protected function validateParameters($params)
   {
     foreach (array('model_class', 'moduleName') as $key)
@@ -197,23 +341,33 @@ class sfThemeGenerator extends sfDoctrineGenerator
     unset($params['config']);
     $this->params = $params;
   }
-  
+
   public function checkConfigIsValid($configs, $available)
   {
     if ($available !== array()) // all options pass for "array()"
     {
-      foreach ($configs as $key => $config) 
+      foreach ($configs as $key => $config)
       {
-        if (!isset($available[$key])) 
+        if (!isset($available[$key]))
         {
           throw new InvalidArgumentException(sprintf('Configuration key "%s" is invalid.', $key));
         }
-      
-        if (is_array($config) && is_array($available[$key])) 
+
+        if (is_array($config) && is_array($available[$key]))
         {
           $this->checkConfigIsValid($config, $available[$key]);
         }
       }
     }
+  }
+  
+  public function unescapeString($string)
+  {
+    return str_replace("\\'", "'", $string);
+  }
+
+  protected function getConfigurationClass()
+  {
+    return 'sfThemeGeneratorConfiguration';
   }
 }
