@@ -1,7 +1,7 @@
 <?php
 
 /**
-* 
+*
 */
 class sfThemeTokenParser
 {
@@ -12,30 +12,30 @@ class sfThemeTokenParser
 
   function __construct($tokenMatches, $varName, $i18nCatalogue = null)
   {
-    $this->tokenMatches  = $tokenMatches;
+    $this->setTokenMatches($tokenMatches);
     $this->varName       = $varName;
     $this->i18nCatalogue = $i18nCatalogue;
   }
-  
+
   public function renderHtmlText($text)
   {
     if ($this->hasI18nEnabled()) {
       $text = sprintf('<?php echo __(\'%s\', array(), \''. $this->getI18nCatalogue().'\') ?>', $this->escapeString($text));
-      $this->replaceTokens($text, 'php');
+      return $this->replaceTokens($text, 'php');
     }
 
     return $this->replaceTokens($text, 'html');
   }
-  
+
   // Render text in a PHP block
   public function renderPhpText($text)
   {
     $text = $this->asPhp($this->replaceTokens($text, 'php'));
-    
+
     if ($this->hasI18nEnabled()) {
       $text = sprintf('__(%s, array(), \''. $this->getI18nCatalogue().'\')', $text);
     }
-    
+
     return $text;
   }
 
@@ -45,7 +45,7 @@ class sfThemeTokenParser
     if ($this->hasI18nEnabled()) {
       $text = sprintf('||__(\'%s\', array(), \''. $this->getI18nCatalogue().'\')||', $text);
     }
-    
+
     return $text;
   }
 
@@ -53,13 +53,13 @@ class sfThemeTokenParser
   {
     return $this->asPhp($array);
   }
-  
+
   public function replaceTokens($string, $format = 'html')
   {
     $tr1 = array();
     $tr2 = array();
     $renderTextAsBlock = false;
-    
+
     preg_match_all('/\'\|\|(.*?)\|\|\'/', $string, $matches, PREG_PATTERN_ORDER);
 
     if (count($matches[1])) {
@@ -68,12 +68,12 @@ class sfThemeTokenParser
         $tr1[$matches[0][$i]] = $this->unescapeString($name);
       }
     }
-    
+
     preg_match_all('/%%([^%]+)%%/', $string, $matches, PREG_PATTERN_ORDER);
-    
+
     if (count($matches[1])) {
       $renderTextAsBlock = false;
-    
+
       foreach ($matches[1] as $i => $name)
       {
         if (isset($this->tokenMatches[$name])) {
@@ -97,14 +97,15 @@ class sfThemeTokenParser
           break;
       }
     }
-    
+
     if ($tr1) {
       $string = strtr($string, $tr1);
     }
-    
+
     if ($tr2) {
       $string = strtr($string, $tr2);
     }
+
     return $this->clearEmptyStrings($string);
   }
 
@@ -113,11 +114,11 @@ class sfThemeTokenParser
     if (strpos($text, "''.") === 0) {
       $text = substr($text, 3);
     }
-    
+
     if (strpos(strrev($text), "''.") === 0) {
       $text = strrev(substr(strrev($text), 3));
     }
-    
+
     return strtr($text, array(
       ".''." => '.',
       "(''." => '(',
@@ -135,7 +136,7 @@ class sfThemeTokenParser
 
     return $text;
   }
-  
+
   public function getVarName()
   {
     return $this->varName;
@@ -155,7 +156,7 @@ class sfThemeTokenParser
   {
     return str_replace("\\'", "'", $string);
   }
-  
+
   public function getColumnGetter($column, $varName = null)
   {
     $getter = 'get'.sfInflector::camelize($column);
@@ -167,11 +168,21 @@ class sfThemeTokenParser
     return $getter;
   }
   
+  public function setTokenMatches($tokenMatches)
+  {
+    $this->tokenMatches = $tokenMatches;
+  }
+  
+  public function getTokenMatches($tokenMatches)
+  {
+    return $this->tokenMatches;
+  }
+
   public function hasI18nEnabled()
   {
     return isset($this->tokenMatches['i18n']) && $this->tokenMatches['i18n'];
   }
-  
+
   public function getI18nCatalogue()
   {
     return $this->i18nCatalogue;

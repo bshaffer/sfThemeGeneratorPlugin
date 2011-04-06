@@ -4,6 +4,7 @@ class sfThemeGenerator extends sfDoctrineGenerator
 {
   protected
     $options = array(),
+    $themeDir = null,
     $availableConfigs = array();
 
   public function getClassLabel()
@@ -14,6 +15,11 @@ class sfThemeGenerator extends sfDoctrineGenerator
   public function getFormClass()
   {
     return $this->get('form_class', $this->getModelClass().'Form');
+  }
+
+  public function getThemeDirectory()
+  {
+    return $this->themeDir;
   }
 
   public function get($config, $default = null)
@@ -114,10 +120,12 @@ class sfThemeGenerator extends sfDoctrineGenerator
    *
    * @return string HTML code
    */
-  public function getLinkToAction($actionName, $params, $pk_link = false)
+  public function getLinkToAction($actionName, $params, $object_link = false)
   {
+    $route  = isset($params['route']) ? $params['route'] : null;
     $action = isset($params['action']) ? $params['action'] : 'List'.sfInflector::camelize($actionName);
     $label  = isset($params['label']) ? $params['label'] : sfInflector::humanize($actionName);
+
     if (isset($params['confirm'])) {
       $params['confirm'] = $this->renderPhpArrayText($params['confirm']);
     }
@@ -127,11 +135,24 @@ class sfThemeGenerator extends sfDoctrineGenerator
     }
 
     // Not a "link_to" attribute
-    unset($params['action'], $params['label'], $params['object_link']);
+    unset($params['action'], $params['label'], $params['route'], $params['object_link']);
 
-    $url_params = $pk_link ? '?'.$this->getPrimaryKeyUrlParams() : '\'';
-
-    return $this->parser->replaceTokens(sprintf('[?php echo link_to(%s, \'%s/%s, %s) ?]', $this->renderPhpText($label), $this->getModuleName(), $action.$url_params, $this->parser->renderArray($params)), 'php');
+    if ($route) {
+      $route = $this->asPhp($route);
+      $urlOptions = $object_link ? '$'.$this->getSingularName() : 'array()';
+    }
+    else {
+      $route = $this->urlFor($object_link ? 'object' : 'collection', false);
+      $urlOptions = array('action' => $action);
+      if ($object_link) {
+        $urlOptions['sf_subject'] = sprintf('||$%s||', $this->getSingularName());
+      }
+      $urlOptions = $this->parser->renderArray($urlOptions);
+    }
+    
+    $linkOptions = $this->parser->renderArray($params);
+    
+    return $this->parser->replaceTokens(sprintf('[?php echo link_to(%s, %s, %s, %s) ?]', $this->renderPhpText($label), $route, $urlOptions, $linkOptions), 'php');
   }
 
   public function urlFor($action, $routeName = true)
@@ -173,13 +194,11 @@ class sfThemeGenerator extends sfDoctrineGenerator
    */
   public function generate($params = array())
   {
-    $this->validateParameters($params);
+    $params = $this->validateParameters($params);
     $this->saveParams($params);
 
     // theme exists?
-    $themeDir = $this->generatorManager->getConfiguration()->getGeneratorTemplate($this->getGeneratorClass(), $this->getTheme(), '');
-    if (!is_dir($themeDir))
-    {
+    if (!is_dir($themeDir = $this->getThemeDirectory())) {
       throw new sfConfigurationException(sprintf('The theme "%s" does not exist.', $this->getTheme()));
     }
 
@@ -195,16 +214,18 @@ class sfThemeGenerator extends sfDoctrineGenerator
 
     return sprintf("require_once('%s/%s/actions/actions.class.php');", sfConfig::get('sf_module_cache_dir'), $this->generatedModuleName);
   }
-  
+
   protected function saveParams($params)
   {
+    $this->params = $params;
     $this->configToOptions($params);
     $this->setModuleName($params['moduleName']);
     $this->setGeneratedModuleName('auto'.ucfirst($this->getModuleName()));
     $this->options['singular_name'] = $this->getSingularName();
     $this->options['class_label']   = $this->getClassLabel();
     $this->modelClass = $params['model_class'];
-    $this->setTheme(isset($this->params['theme']) ? $this->params['theme'] : 'default');
+    $this->setTheme(isset($params['theme']) ? $params['theme'] : 'default');
+    $this->themeDir = $this->generatorManager->getConfiguration()->getGeneratorTemplate($this->getGeneratorClass(), $this->getTheme(), '');
   }
 
   /**
@@ -243,7 +264,8 @@ class sfThemeGenerator extends sfDoctrineGenerator
     }
 
     unset($params['config']);
-    $this->params = $params;
+
+    return $params;
   }
 
   // Provides a hook to change generated files
