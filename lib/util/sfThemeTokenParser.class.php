@@ -30,7 +30,7 @@ class sfThemeTokenParser
   // Render text in a PHP block
   public function renderPhpText($text)
   {
-    $text = $this->asPhp($this->replaceTokens($text, 'php'));
+    $text = $this->replaceTokens($text, 'php');
 
     if ($this->hasI18nEnabled()) {
       $text = sprintf('__(%s, array(), \''. $this->getI18nCatalogue().'\')', $text);
@@ -51,7 +51,38 @@ class sfThemeTokenParser
 
   public function renderArray($array)
   {
-    return $this->asPhp($array);
+    $arrayLines = array();
+    foreach ($array as $key => $value) {
+      $line = '  ';
+      if (is_int($key)) {
+        $line .= $key;
+      }
+      elseif (is_bool($key)) {
+        $line .= $this->asPhp($key);
+      }
+      else {
+        $line .= $this->renderPhpText($key);
+      }
+      
+      $line .= ' => ';
+      
+      if (is_int($value)) {
+        $line .= $value;
+      }
+      elseif (is_bool($value)) {
+        $line .= $this->asPhp($value);
+      }
+      elseif(is_array($value)) {
+        $line .= $this->renderArray($value);
+      }
+      else {
+        $line .= $this->renderPhpText($value);
+      }
+      
+      $arrayLines[] = $line;
+    }
+    
+    return sprintf("array(%s)", implode(',', $arrayLines));
   }
 
   public function replaceTokens($string, $format = 'html')
@@ -87,15 +118,16 @@ class sfThemeTokenParser
       }
     }
 
-    if ($renderTextAsBlock) {
-      switch ($format) {
-        case 'html':
+    switch ($format) {
+      case 'html':
+        if ($renderTextAsBlock) {
           $string = $this->renderTextInPhpBlock($this->escapeString($string));
-          break;
+        }
+        break;
 
-        case 'php':
-          break;
-      }
+      case 'php':
+        $string = $this->asPhp($string);
+        break;
     }
 
     if ($tr1) {
@@ -111,20 +143,24 @@ class sfThemeTokenParser
 
   public function clearEmptyStrings($text)
   {
+    // start of string
     if (strpos($text, "''.") === 0) {
       $text = substr($text, 3);
     }
 
+    // end of string
     if (strpos(strrev($text), "''.") === 0) {
       $text = strrev(substr(strrev($text), 3));
     }
 
     return strtr($text, array(
-      ".''." => '.',
-      "(''." => '(',
-      ", ''." => ', ',
-      ".'')" => ')',
-      ".''," => ',',
+      ".''."           => '.',   // middle of string
+      "(''."           => '(',   // start of function
+      ", ''."          => ', ', // start array value
+      "<?php echo ''." => '<?php echo ',  // start of php block
+      ".'')"           => ')',   // end of function
+      ".'',"           => ',',   // end of array value
+      ".'' ?>"         => ' ?>',  // end of php block
     ));
   }
 
@@ -137,16 +173,6 @@ class sfThemeTokenParser
     return $text;
   }
 
-  public function getVarName()
-  {
-    return $this->varName;
-  }
-
-  public function asPhp($variable)
-  {
-    return str_replace(array("\n", 'array ('), array('', 'array('), var_export($variable, true));
-  }
-
   public function escapeString($string)
   {
     return str_replace("'", "\\'", $string);
@@ -155,6 +181,11 @@ class sfThemeTokenParser
   public function unescapeString($string)
   {
     return str_replace("\\'", "'", $string);
+  }
+
+  public function asPhp($variable)
+  {
+    return str_replace(array("\n", 'array ('), array('', 'array('), var_export($variable, true));
   }
 
   public function getColumnGetter($column, $varName = null)
@@ -166,6 +197,11 @@ class sfThemeTokenParser
     }
 
     return $getter;
+  }
+
+  public function getVarName()
+  {
+    return $this->varName;
   }
   
   public function setTokenMatches($tokenMatches)
