@@ -45,3 +45,7 @@ $t->is($parser->renderArray(array('nested array' => array('%%real_token%%' => 't
 $t->is($parser->renderArray(array('to_string' => '%%to_string%%')), "array(  'to_string' => \$testvar)", 'simple array with "to_string" token');
 $t->is($parser->renderArray(array('fake_token' => '%%fake_token%%')), "array(  'fake_token' => \$testvar->getFakeToken())", 'simple array with getter token');
 $t->is($parser->renderArray(array('fake_tokens' => '\'%%fake_token1%%\', \'%%fake_token2%%\'')), "array(  'fake_tokens' => '\''.\$testvar->getFakeToken1().'\', \''.\$testvar->getFakeToken2().'\'')", 'simple array with getter tokens mid string');
+$t->is($parser->renderArray(array('fake_tokens' => '\'%%fake_token1%%\', \'%%fake_token2%%\'')), "array(  'fake_tokens' => '\''.\$testvar->getFakeToken1().'\', \''.\$testvar->getFakeToken2().'\'')", 'simple array with getter tokens mid string');
+
+$t->info('test "replacePhpTokens" function');
+$t->is($parser->replacePhpTokens("'||\$this->aFunction()||'"), '$this->aFunction()', 'php tokens in string replace value with an actual php stirng');

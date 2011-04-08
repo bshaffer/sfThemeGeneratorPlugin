@@ -22,6 +22,11 @@ class sfThemeGenerator extends sfDoctrineGenerator
     return $this->themeDir;
   }
 
+  public function hasI18nEnabled()
+  {
+    return $this->get('i18n', false);
+  }
+
   public function get($config, $default = null)
   {
     if (isset($this->options[$config])) {
@@ -34,19 +39,34 @@ class sfThemeGenerator extends sfDoctrineGenerator
   // Render text in HTML
   public function renderHtmlText($text)
   {
+    if ($this->hasI18nEnabled()) {
+      $text = $this->renderPhpText($text);
+      return sprintf('<?php echo %s ?>', $text);
+    }
+
     return $this->parser->renderHtmlText($text);
   }
 
   // Render text in a PHP block
   public function renderPhpText($text)
   {
-    return $this->parser->renderPhpText($text);
+    $text = $this->parser->renderPhpText($text);
+
+    if ($this->hasI18nEnabled()) {
+      $text = sprintf('__(%s, array(), \''. $this->getI18nCatalogue().'\')', $text);
+    }
+
+    return $text;
   }
 
   // Render text that will appear in a php array
   public function renderPhpArrayText($text)
   {
-    return $this->parser->renderPhpArrayText($text);
+    if ($this->hasI18nEnabled()) {
+      $text = $this->parser->wrapPhpToken(sprintf('__(\'%s\', array(), \''. $this->getI18nCatalogue().'\')', $text));
+    }
+
+    return $text;
   }
 
   public function startCredentialCondition($params = array())
@@ -54,7 +74,7 @@ class sfThemeGenerator extends sfDoctrineGenerator
     if (isset($params['credentials']))
     {
       return sprintf("[?php if (\$sf_user->hasCredential(%s)): ?]
-", $this->asPhp($params['credentials']));
+", $this->renderCredentials($params['credentials']));
     }
   }
 
@@ -70,13 +90,11 @@ class sfThemeGenerator extends sfDoctrineGenerator
   {
     if (isset($params['credentials']))
     {
-      $credentials = $this->asPhp($params['credentials']);
-
       $content = sprintf("
 [?php if (\$sf_user->hasCredential(%s)): ?]
   %s
 [?php endif; ?]
-", $credentials, $content);
+", $this->renderCredentials($params['credentials']), $content);
     }
 
     return $content;
@@ -135,7 +153,7 @@ class sfThemeGenerator extends sfDoctrineGenerator
     }
 
     // Not a "link_to" attribute
-    unset($params['action'], $params['label'], $params['route'], $params['object_link']);
+    unset($params['action'], $params['label'], $params['route'], $params['object_link'], $params['credentials']);
 
     if ($route) {
       $route = $this->asPhp($route);
@@ -149,10 +167,10 @@ class sfThemeGenerator extends sfDoctrineGenerator
       }
       $urlOptions = $this->parser->renderArray($urlOptions);
     }
-    
+
     $linkOptions = $this->parser->renderArray($params);
-    
-    return $this->parser->replaceTokens(sprintf('[?php echo link_to(%s, %s, %s, %s) ?]', $this->renderPhpText($label), $route, $urlOptions, $linkOptions), 'php');
+
+    return $this->parser->replaceTokens(sprintf('[?php echo link_to(%s, %s, %s, %s) ?]', $this->renderPhpText($label), $route, $urlOptions, $linkOptions));
   }
 
   public function urlFor($action, $routeName = true)
@@ -266,6 +284,16 @@ class sfThemeGenerator extends sfDoctrineGenerator
     unset($params['config']);
 
     return $params;
+  }
+
+  protected function renderCredentials($credentials)
+  {
+    if (is_array($credentials) && count($credentials) == 1
+      && isset($credentials[0]) && is_string($credentials[0])) {
+      $credentials = $credentials[0];
+    }
+
+    return $this->asPhp($credentials);
   }
 
   // Provides a hook to change generated files

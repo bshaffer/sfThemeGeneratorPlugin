@@ -7,46 +7,23 @@ class sfThemeTokenParser
 {
   protected
     $tokenMatches,
-    $varName,
-    $i18nCatalogue;
+    $varName;
 
-  function __construct($tokenMatches, $varName, $i18nCatalogue = null)
+  function __construct($tokenMatches, $varName)
   {
     $this->setTokenMatches($tokenMatches);
     $this->varName       = $varName;
-    $this->i18nCatalogue = $i18nCatalogue;
   }
 
   public function renderHtmlText($text)
   {
-    if ($this->hasI18nEnabled()) {
-      $text = sprintf('<?php echo __(\'%s\', array(), \''. $this->getI18nCatalogue().'\') ?>', $this->escapeString($text));
-      return $this->replaceTokens($text, 'php');
-    }
-
     return $this->replaceTokens($text, 'html');
   }
 
   // Render text in a PHP block
   public function renderPhpText($text)
   {
-    $text = $this->replaceTokens($text, 'php');
-
-    if ($this->hasI18nEnabled()) {
-      $text = sprintf('__(%s, array(), \''. $this->getI18nCatalogue().'\')', $text);
-    }
-
-    return $text;
-  }
-
-  // Render text that will appear in a php array
-  public function renderPhpArrayText($text)
-  {
-    if ($this->hasI18nEnabled()) {
-      $text = sprintf('||__(\'%s\', array(), \''. $this->getI18nCatalogue().'\')||', $text);
-    }
-
-    return $text;
+    return $this->replaceTokens($text, 'php');
   }
 
   public function renderArray($array)
@@ -63,9 +40,9 @@ class sfThemeTokenParser
       else {
         $line .= $this->renderPhpText($key);
       }
-      
+
       $line .= ' => ';
-      
+
       if (is_int($value)) {
         $line .= $value;
       }
@@ -78,27 +55,19 @@ class sfThemeTokenParser
       else {
         $line .= $this->renderPhpText($value);
       }
-      
+
       $arrayLines[] = $line;
     }
-    
-    return sprintf("array(%s)", implode(',', $arrayLines));
+
+    return $this->replacePhpTokens(sprintf("array(%s)", implode(',', $arrayLines)));
   }
 
   public function replaceTokens($string, $format = 'html')
   {
-    $tr1 = array();
-    $tr2 = array();
+    $tr = array();
     $renderTextAsBlock = false;
 
-    preg_match_all('/\'\|\|(.*?)\|\|\'/', $string, $matches, PREG_PATTERN_ORDER);
 
-    if (count($matches[1])) {
-      foreach ($matches[1] as $i => $name)
-      {
-        $tr1[$matches[0][$i]] = $this->unescapeString($name);
-      }
-    }
 
     preg_match_all('/%%([^%]+)%%/', $string, $matches, PREG_PATTERN_ORDER);
 
@@ -108,12 +77,12 @@ class sfThemeTokenParser
       foreach ($matches[1] as $i => $name)
       {
         if (isset($this->tokenMatches[$name])) {
-          $tr2[$matches[0][$i]] = $this->tokenMatches[$name];
+          $tr[$matches[0][$i]] = $this->tokenMatches[$name];
         }
         elseif($varName = $this->getVarName()) {
           $renderTextAsBlock = true;
           $getter  = $name == 'to_string' ? '$'.$varName : $this->getColumnGetter($name, $varName);
-          $tr2[$matches[0][$i]]  = sprintf("'.%s.'", $getter);
+          $tr[$matches[0][$i]]  = sprintf("'.%s.'", $getter);
         }
       }
     }
@@ -130,15 +99,35 @@ class sfThemeTokenParser
         break;
     }
 
-    if ($tr1) {
-      $string = strtr($string, $tr1);
-    }
-
-    if ($tr2) {
-      $string = strtr($string, $tr2);
+    if ($tr) {
+      $string = strtr($string, $tr);
     }
 
     return $this->clearEmptyStrings($string);
+  }
+
+  public function replacePhpTokens($string)
+  {
+    $tr = array();
+    preg_match_all('/\'\|\|(.*?)\|\|\'/', $string, $matches, PREG_PATTERN_ORDER);
+
+    if (count($matches[1])) {
+      foreach ($matches[1] as $i => $name)
+      {
+        $tr[$matches[0][$i]] = $this->unescapeString($name);
+      }
+    }
+
+    if ($tr) {
+      $string = strtr($string, $tr);
+    }
+
+    return $string;
+  }
+
+  public function wrapPhpToken($string)
+  {
+    return sprintf('||%s||', $string);
   }
 
   public function clearEmptyStrings($text)
@@ -203,24 +192,14 @@ class sfThemeTokenParser
   {
     return $this->varName;
   }
-  
+
   public function setTokenMatches($tokenMatches)
   {
     $this->tokenMatches = $tokenMatches;
   }
-  
+
   public function getTokenMatches($tokenMatches)
   {
     return $this->tokenMatches;
-  }
-
-  public function hasI18nEnabled()
-  {
-    return isset($this->tokenMatches['i18n']) && $this->tokenMatches['i18n'];
-  }
-
-  public function getI18nCatalogue()
-  {
-    return $this->i18nCatalogue;
   }
 }
