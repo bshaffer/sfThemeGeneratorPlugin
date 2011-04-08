@@ -8,7 +8,7 @@ class sfTestThemeConfiguration extends sfThemeConfiguration
   public function filesToCopy()
   {
     return array_merge(array(
-      'templates/custom.php' => 'APP_DIR/templates/custom.php',
+      'APP_DIR/templates/custom.php' => 'THEME_DIR/templates/custom.php',
     ), parent::filesToCopy());
   }
   

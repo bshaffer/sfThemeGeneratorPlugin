@@ -38,7 +38,7 @@ class sfThemeConfiguration
   public function filesToCopy()
   {
     return array(
-      'skeleton' => 'MODULE_DIR'
+      'MODULE_DIR' => 'THEME_DIR/skeleton'
     );
   }
   
@@ -93,9 +93,10 @@ class sfThemeConfiguration
       throw new LogicException("Theme '$this->theme' not found");
     }
 
-    foreach ($this->filesToCopy() as $from => $to) 
+    foreach ($this->filesToCopy() as $to => $from)
     {
-      $fromFile = sprintf('%s/%s', $dir, $from);
+      
+      $fromFile = strtr($from, $this->getConstants());
       $toFile = strtr($to, $this->getConstants());
 
       if (is_dir($fromFile)) 
@@ -143,8 +144,10 @@ class sfThemeConfiguration
       'AUTHOR_NAME'    => isset($properties['symfony']['author']) ? $properties['symfony']['author'] : 'Your name here',
       'MODULE_DIR'     => sfConfig::get('sf_app_module_dir') . '/' . $this->options['module'],
       'MODULES_DIR'    => sfConfig::get('sf_app_module_dir'),
+      'PROJECT_DIR'    => sfConfig::get('sf_root_dir'),
       'APP_DIR'        => sfConfig::get('sf_app_dir'),
       'APP_CONFIG_DIR' => sfConfig::get('sf_app_config_dir'),
+      'THEME_DIR'      => $this->task->getThemeDir($this->theme, 'sfDoctrineModule'),
     );
   }
   

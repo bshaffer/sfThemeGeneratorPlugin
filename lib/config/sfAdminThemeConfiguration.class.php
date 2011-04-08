@@ -12,22 +12,22 @@ class sfAdminThemeConfiguration extends sfThemeConfiguration
     $this->askForModel();
 
     $this->task->bootstrapSymfony($this->options['application'], $this->options['env']);
-    
+
     $this->askForOption('module', null, sfInflector::underscore($this->options['model']));
   }
 
   public function filesToCopy()
   {
     return array(
-      'skeleton/actions'                => 'MODULE_DIR/actions',
-      'skeleton/config'                 => 'MODULE_DIR/config',
-      'skeleton/templates'              => 'MODULE_DIR/templates',
-      'skeleton/lib/helper.php'         => 'MODULE_DIR/lib/MODULE_NAMEGeneratorHelper.class.php',
-      'skeleton/lib/configuration.php'  => 'MODULE_DIR/lib/MODULE_NAMEGeneratorConfiguration.class.php',
-      'skeleton/lib/helper.php'         => 'MODULE_DIR/lib/MODULE_NAMEGeneratorHelper.class.php',
+      'MODULE_DIR/actions'                                         => 'THEME_DIR/skeleton/actions',
+      'MODULE_DIR/config'                                          => 'THEME_DIR/skeleton/config',
+      'MODULE_DIR/templates'                                       => 'THEME_DIR/skeleton/templates',
+      'MODULE_DIR/lib/MODULE_NAMEGeneratorHelper.class.php'        => 'THEME_DIR/skeleton/lib/helper.php',
+      'MODULE_DIR/lib/MODULE_NAMEGeneratorConfiguration.class.php' => 'THEME_DIR/skeleton/lib/configuration.php',
+      'MODULE_DIR/lib/MODULE_NAMEGeneratorHelper.class.php'        => 'THEME_DIR/skeleton/lib/helper.php',
     );
   }
-  
+
   public function initConstants()
   {
     parent::initConstants();
@@ -49,7 +49,7 @@ EOF
       $this->options['module']
     );
   }
-  
+
   public function routesToPrepend()
   {
     $primaryKey = Doctrine_Core::getTable($this->options['model'])->getIdentifier();
@@ -63,18 +63,18 @@ EOF
     with_wildcard_routes: true
 EOF
       ,
-      $this->options['model'], 
-      $this->options['module'], 
+      $this->options['model'],
+      $this->options['module'],
       $this->options['module'],
       $primaryKey
     ));
 
     return $routes;
   }
-  
+
   public function filterGeneratedFile($file)
   {
-    switch (true) 
+    switch (true)
     {
       // Rename class in actions.class.php
       case strpos($file, 'actions.class.php') !== false:
