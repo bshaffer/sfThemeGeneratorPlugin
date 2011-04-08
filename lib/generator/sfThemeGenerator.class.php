@@ -238,10 +238,10 @@ class sfThemeGenerator extends sfDoctrineGenerator
     $this->params = $params;
     $this->configToOptions($params);
     $this->setModuleName($params['moduleName']);
+    $this->modelClass = $params['model_class'];
     $this->setGeneratedModuleName('auto'.ucfirst($this->getModuleName()));
     $this->options['singular_name'] = $this->getSingularName();
     $this->options['class_label']   = $this->getClassLabel();
-    $this->modelClass = $params['model_class'];
     $this->setTheme(isset($params['theme']) ? $params['theme'] : 'default');
     $this->themeDir = $this->generatorManager->getConfiguration()->getGeneratorTemplate($this->getGeneratorClass(), $this->getTheme(), '');
   }
