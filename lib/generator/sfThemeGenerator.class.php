@@ -155,22 +155,43 @@ class sfThemeGenerator extends sfDoctrineGenerator
     // Not a "link_to" attribute
     unset($params['action'], $params['label'], $params['route'], $params['object_link'], $params['credentials']);
 
+    $sf_subject  = $object_link ? '$'.$this->getSingularName() : null;
+    $urlOptions  = array();
+    $linkOptions = $params;
+
     if ($route) {
       $route = $this->asPhp($route);
-      $urlOptions = $object_link ? '$'.$this->getSingularName() : 'array()';
     }
     else {
       $route = $this->urlFor($object_link ? 'object' : 'collection', false);
-      $urlOptions = array('action' => $action);
-      if ($object_link) {
-        $urlOptions['sf_subject'] = sprintf('||$%s||', $this->getSingularName());
-      }
-      $urlOptions = $this->parser->renderArray($urlOptions);
+      $urlOptions['action'] = $action;
     }
 
-    $linkOptions = $this->parser->renderArray($params);
+    if ($sf_subject) {
+      $urlOptions['sf_subject'] = $this->parser->wrapPhpToken($sf_subject);
+    }
 
-    return $this->parser->replaceTokens(sprintf('[?php echo link_to(%s, %s, %s, %s) ?]', $this->renderPhpText($label), $route, $urlOptions, $linkOptions));
+    // Old style URL
+    if (strpos($route, "'@") === 0) {
+      if (is_array($urlOptions)) {
+        $options = array_merge($urlOptions, $linkOptions);
+      }
+      return $this->_renderOldStyleRoute($this->asPhp($label), $route, $this->parser->renderArray($options));
+    }
+
+    $urlOptions = count($urlOptions) == 1 && isset($urlOptions['sf_subject']) ? $sf_subject : $this->parser->renderArray($urlOptions);
+
+    return $this->_renderNewStyleRoute($this->asPhp($label), $route, $urlOptions, $this->parser->renderArray($linkOptions));
+  }
+
+  protected function _renderOldStyleRoute($label, $route, $options)
+  {
+    return $this->parser->replaceTokens(sprintf('[?php echo link_to(%s, %s, %s) ?]', $label, $route, $options), null);
+  }
+
+  protected function _renderNewStyleRoute($label, $route, $urlOptions, $linkOptions)
+  {
+    return $this->parser->replaceTokens(sprintf('[?php echo link_to(%s, %s, %s, %s) ?]', $label, $route, $urlOptions, $linkOptions), null);
   }
 
   public function urlFor($action, $routeName = true)

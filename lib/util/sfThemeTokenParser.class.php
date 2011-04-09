@@ -67,8 +67,6 @@ class sfThemeTokenParser
     $tr = array();
     $renderTextAsBlock = false;
 
-
-
     preg_match_all('/%%([^%]+)%%/', $string, $matches, PREG_PATTERN_ORDER);
 
     if (count($matches[1])) {
