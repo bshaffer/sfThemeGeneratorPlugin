@@ -82,7 +82,7 @@ class sfThemeGenerator extends sfDoctrineGenerator
   {
     if (isset($params['credentials']))
     {
-      return '[?php endif; ?]';
+      return "[?php endif; ?]\n";
     }
   }
 
@@ -173,9 +173,7 @@ class sfThemeGenerator extends sfDoctrineGenerator
 
     // Old style URL
     if (strpos($route, "'@") === 0) {
-      if (is_array($urlOptions)) {
-        $options = array_merge($urlOptions, $linkOptions);
-      }
+      $options = $urlOptions ? array_merge($urlOptions, $linkOptions) : $linkOptions;
       return $this->_renderOldStyleRoute($this->asPhp($label), $route, $this->parser->renderArray($options));
     }
 

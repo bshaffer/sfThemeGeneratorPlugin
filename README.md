@@ -41,8 +41,8 @@ number of options:
     # So does this!
     $ php symfony theme:generate default --application=frontend --model=MyModel --accept-defaults
 
-Pretty cool, right?  So what else do you get with this plugin?  Check out my [sfHadoriThemePlugin](http://github.com/bshaffer/sfHadoriThemePlugin)
-to really see these themes in action.  You won't be disappointed!
+The `accept-defaults` option will prevent the plugin from prompting you for default values.  Pretty cool, right?  So what else do you get with this plugin?  
+Check out my [sfHadoriThemePlugin](http://github.com/bshaffer/sfHadoriThemePlugin) to really see these themes in action.  You won't be disappointed!
 
 How do I create my own theme?
 -----------------------------
@@ -50,9 +50,9 @@ How do I create my own theme?
 Well aren't you ambitious? If you want to create your own theme, it's not very difficult.  Every theme must have a subclass of the sfThemeConfigration 
 class.  This controls how your theme is set up.  Your configuration class is mainly responsible for the following things:
 
-- Prompting users for the information needed to generate your theme. (setup() method)
-- Adding routes to the application's routing.yml (routesToPrepend() method)
-- Copying the files from one location (your plugin) to another location in the application (filesToCopy() method)
+- Prompting users for the information needed to generate your theme. (`setup` method)
+- Adding routes to the application's routing.yml (`routesToPrepend` method)
+- Copying the files from one location (your plugin) to another location in the application (`filesToCopy` method)
 
 Is there anything else really cool I should know about?
 -------------------------------------------------------
