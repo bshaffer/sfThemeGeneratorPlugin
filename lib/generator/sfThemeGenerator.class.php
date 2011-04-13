@@ -116,8 +116,6 @@ class sfThemeGenerator extends sfDoctrineGenerator
 
   public function linkTo($action, $params)
   {
-    $action = strpos($action, '_') === 0 ? substr($action, 1) : $action;
-
     $forObject = isset($params['object_link']) && $params['object_link'];
 
     $params = array_merge(array('class' => $action), $params);
@@ -312,7 +310,7 @@ class sfThemeGenerator extends sfDoctrineGenerator
       $credentials = $credentials[0];
     }
 
-    return $this->asPhp($credentials);
+    return is_array($credentials) ? $this->parser->renderArray($credentials) : $this->asPhp($credentials);
   }
 
   // Provides a hook to change generated files

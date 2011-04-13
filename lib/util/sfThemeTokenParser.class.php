@@ -31,17 +31,22 @@ class sfThemeTokenParser
     $arrayLines = array();
     foreach ($array as $key => $value) {
       $line = '  ';
-      if (is_int($key)) {
-        $line .= $key;
-      }
-      elseif (is_bool($key)) {
-        $line .= $this->asPhp($key);
-      }
-      else {
-        $line .= $this->renderPhpText($key);
-      }
 
-      $line .= ' => ';
+      $isAssociative = $this->arrayKeyIsAssociative($key, $array);
+
+      if (!$isAssociative) {
+        if (is_int($key)) {
+          $line .= $key;
+        }
+        elseif (is_bool($key)) {
+          $line .= $this->asPhp($key);
+        }
+        else {
+          $line .= $this->renderPhpText($key);
+        }
+
+        $line .= ' => ';
+      }
 
       if (is_int($value)) {
         $line .= $value;
@@ -199,5 +204,26 @@ class sfThemeTokenParser
   public function getTokenMatches($tokenMatches)
   {
     return $this->tokenMatches;
+  }
+  
+  protected function arrayKeyIsAssociative($key, $array)
+  {
+    if (!is_int($key) || !isset($array[$key]) || count($array) < $key) {
+      return false;
+    }
+    
+    $i = 0;
+    foreach ($array as $value) {
+      if ($i == $key) {
+        return true;
+      }
+      
+      if ($i > $key) {
+        return false;
+      }
+      $i++;
+    }
+    
+    return false;
   }
 }
