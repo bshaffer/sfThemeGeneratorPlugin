@@ -1,6 +1,33 @@
 sfThemeGeneratorPlugin
 ======================
 
+Installation
+------------
+
+### With git
+
+    git submodule add git://github.com/bshaffer/sfThemeGeneratorPlugin.git plugins/sfThemeGeneratorPlugin
+    git submodule init
+    git submodule update
+
+### With subversion
+
+    svn propedit svn:externals plugins
+
+In the editor that's displayed, add the following entry and then save
+
+    sfHadoriThemePlugin https://svn.github.com/bshaffer/sfThemeGeneratorPlugin.git
+
+Finally, update:
+
+    svn update
+
+### Setup
+
+In your `config/ProjectConfiguration.class.php` file, make sure you have the plugin enabled.
+
+    $this->enablePlugins('sfThemeGeneratorPlugin');
+
 Why do we need a theme generator?
 ---------------------------------
 
