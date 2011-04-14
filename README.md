@@ -16,7 +16,7 @@ Installation
 
 In the editor that's displayed, add the following entry and then save
 
-    sfHadoriThemePlugin https://svn.github.com/bshaffer/sfThemeGeneratorPlugin.git
+    sfThemeGeneratorPlugin https://svn.github.com/bshaffer/sfThemeGeneratorPlugin.git
 
 Finally, update:
 
