@@ -172,12 +172,12 @@ class sfThemeGenerator extends sfDoctrineGenerator
     // Old style URL
     if (strpos($route, "'@") === 0) {
       $options = $urlOptions ? array_merge($urlOptions, $linkOptions) : $linkOptions;
-      return $this->_renderOldStyleRoute($this->asPhp($label), $route, $this->parser->renderArray($options));
+      return $this->_renderOldStyleRoute($this->renderPhpText($label), $route, $this->parser->renderArray($options));
     }
 
     $urlOptions = count($urlOptions) == 1 && isset($urlOptions['sf_subject']) ? $sf_subject : $this->parser->renderArray($urlOptions);
 
-    return $this->_renderNewStyleRoute($this->asPhp($label), $route, $urlOptions, $this->parser->renderArray($linkOptions));
+    return $this->_renderNewStyleRoute($this->renderPhpText($label), $route, $urlOptions, $this->parser->renderArray($linkOptions));
   }
 
   protected function _renderOldStyleRoute($label, $route, $options)
